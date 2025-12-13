@@ -47,10 +47,16 @@ export function useSpeechToText() {
       };
       
       recognitionRef.current.onend = () => {
-          if (isListening) {
+          // Only restart if explicitly still in "listening" state
+          // and we haven't manually stopped it
+          if (isListening && recognitionRef.current) {
              try {
+                // Check if already started to avoid error
+                // Unfortunately isStarted property isn't standard, so we wrap in try/catch
                 recognitionRef.current.start();
-             } catch (e) { }
+             } catch (e) {
+                 // Ignore "already started" errors
+             }
           }
       };
     }
@@ -60,7 +66,13 @@ export function useSpeechToText() {
     setTranscript('');
     setIsListening(true);
     try {
-      recognitionRef.current?.start();
+        // Stop first just in case
+        if (recognitionRef.current) {
+            try { recognitionRef.current.stop(); } catch(e) {}
+            setTimeout(() => {
+                 try { recognitionRef.current?.start(); } catch(e) {}
+            }, 100);
+        }
     } catch(e) { }
   }, []);
 

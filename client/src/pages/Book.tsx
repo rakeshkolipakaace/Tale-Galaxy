@@ -12,9 +12,14 @@ import { cn } from "@/lib/utils";
 import { Card } from "@/components/ui/card";
 
 export default function Book() {
-  const [match, params] = useRoute("/book/:genre");
+  const [match, params] = useRoute("/read/:genre/:storyId");
   const [, setLocation] = useLocation();
-  const story = stories['animals']; 
+  const genreId = params?.genre || 'animals';
+  const storyId = params?.storyId;
+  
+  // Find the specific story
+  const genreStories = stories[genreId] || [];
+  const story = genreStories.find(s => s.id === storyId) || genreStories[0];
 
   // States: 'cover' | 'reading' | 'ended' | 'quiz'
   const [bookState, setBookState] = useState<'cover' | 'reading' | 'ended' | 'quiz'>('cover');
@@ -138,7 +143,7 @@ export default function Book() {
         
         {/* Navigation / Close */}
         <div className="absolute top-4 left-4 z-50">
-           <Button variant="ghost" className="rounded-full w-10 h-10 p-0 bg-black/20 hover:bg-black/40 text-white backdrop-blur-md" onClick={() => setLocation('/')}>
+           <Button variant="ghost" className="rounded-full w-10 h-10 p-0 bg-black/20 hover:bg-black/40 text-white backdrop-blur-md" onClick={() => setLocation(`/book/${genreId}`)}>
              <ChevronLeft className="w-6 h-6" />
            </Button>
         </div>
@@ -279,10 +284,10 @@ export default function Book() {
                                 </Button>
                                 <Button 
                                     variant="outline"
-                                    onClick={() => { setBookState('cover'); setPageIndex(0); }}
+                                    onClick={() => setLocation(`/book/${genreId}`)}
                                     className="h-20 text-xl rounded-2xl border-4 border-stone-200 hover:bg-stone-100"
                                 >
-                                    Read Again
+                                    Back to Stories
                                 </Button>
                             </div>
                          </Card>

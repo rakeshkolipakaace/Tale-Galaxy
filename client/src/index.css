@@ -20,24 +20,15 @@
 
 @layer base {
   html, body {
-    @apply h-full w-full overflow-hidden bg-zinc-900 text-ink touch-none;
+    @apply h-full w-full overflow-hidden bg-paper text-ink touch-none;
   }
   
   #root {
-    @apply h-full w-full flex items-center justify-center;
+    @apply h-full w-full;
   }
 }
 
 @layer components {
-  /* Mobile Simulator Container */
-  .mobile-frame {
-    @apply relative w-full h-full md:max-w-[375px] md:max-h-[812px] md:rounded-[40px] md:border-[8px] md:border-zinc-800 bg-paper overflow-hidden shadow-2xl transition-all duration-700 ease-in-out;
-  }
-
-  .mobile-frame.landscape {
-    @apply md:w-[812px] md:h-[375px] md:max-w-[812px] md:max-h-[375px];
-  }
-
   /* Book Page Styles */
   .book-spread {
     @apply flex h-full w-full bg-paper relative shadow-inner;

@@ -15,8 +15,8 @@ export function MobileFrame({ children, orientation = 'portrait' }: MobileFrameP
         initial={false}
         animate={{
           rotate: orientation === 'landscape' ? 0 : 0, // We handle visual rotation via width/height swap in CSS mostly, but could do transform
-          width: orientation === 'landscape' ? 'min(850px, 95vw)' : 'min(375px, 95vw)',
-          height: orientation === 'landscape' ? 'min(400px, 90vw)' : 'min(812px, 95vh)',
+          width: orientation === 'landscape' ? 'min(900px, 95vw)' : 'min(400px, 95vw)',
+          height: orientation === 'landscape' ? 'min(600px, 90vh)' : 'min(850px, 95vh)',
         }}
         transition={{ type: "spring", stiffness: 60, damping: 20 }}
         className={cn(

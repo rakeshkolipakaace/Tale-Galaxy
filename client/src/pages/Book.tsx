@@ -156,17 +156,17 @@ export default function Book() {
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0, x: -100 }}
-                        className="w-full h-full flex items-center justify-center bg-stone-800"
+                        className="w-full h-full flex items-center justify-center bg-stone-800 overflow-y-auto"
                     >
-                         <div className="text-center space-y-6 max-w-md p-8 bg-paper rounded-2xl shadow-2xl border-4 border-stone-700">
-                             <img src={story.pages[0].image} className="w-48 h-48 mx-auto rounded-full object-cover border-4 border-stone-300 shadow-inner" />
-                             <h1 className="text-4xl font-story font-bold">{story.title}</h1>
-                             <p className="text-stone-500">Swipe or Click Open to begin your adventure.</p>
+                         <div className="text-center space-y-4 max-w-md p-6 m-4 bg-paper rounded-2xl shadow-2xl border-4 border-stone-700">
+                             <img src={story.pages[0].image} className="w-32 h-32 md:w-48 md:h-48 mx-auto rounded-full object-cover border-4 border-stone-300 shadow-inner" />
+                             <h1 className="text-3xl md:text-4xl font-story font-bold">{story.title}</h1>
+                             <p className="text-stone-500 text-sm md:text-base">Swipe or Click Open to begin your adventure.</p>
                              <Button 
                                 onClick={() => setBookState('reading')}
-                                className="w-full py-6 text-xl rounded-xl bg-primary hover:bg-primary/90 text-white font-bold"
+                                className="w-full py-4 md:py-6 text-lg md:text-xl rounded-xl bg-primary hover:bg-primary/90 text-white font-bold"
                              >
-                                <BookOpen className="mr-2 w-6 h-6" /> Open Book
+                                <BookOpen className="mr-2 w-5 h-5 md:w-6 md:h-6" /> Open Book
                              </Button>
                          </div>
                     </motion.div>

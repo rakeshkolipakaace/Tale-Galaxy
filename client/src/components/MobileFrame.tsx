@@ -14,14 +14,21 @@ export function MobileFrame({ children, orientation = 'portrait' }: MobileFrameP
         layout
         initial={false}
         animate={{
-          rotate: orientation === 'landscape' ? 0 : 0, // We handle visual rotation via width/height swap in CSS mostly, but could do transform
-          width: orientation === 'landscape' ? 'min(900px, 95vw)' : 'min(400px, 95vw)',
-          height: orientation === 'landscape' ? 'min(600px, 90vh)' : 'min(850px, 95vh)',
+          rotate: orientation === 'landscape' ? 0 : 0,
+          // Responsive sizing:
+          // Landscape: wider but constrained by viewport height
+          // Portrait: taller but constrained by viewport width
+          width: orientation === 'landscape' 
+            ? 'min(900px, 98vw)' 
+            : 'min(375px, 95vw)',
+          height: orientation === 'landscape' 
+            ? 'min(600px, 60vh)'  // reduced max height for landscape to fit standard laptops better
+            : 'min(812px, 90vh)',
         }}
         transition={{ type: "spring", stiffness: 60, damping: 20 }}
         className={cn(
           "mobile-frame relative bg-paper overflow-hidden shadow-[0_0_50px_rgba(0,0,0,0.5)] border-zinc-800",
-          "border-[8px] md:border-[12px] rounded-[30px] md:rounded-[45px]",
+          "border-[4px] md:border-[8px] rounded-[20px] md:rounded-[45px]", // Smaller border/radius on mobile
           orientation === 'landscape' ? 'flex flex-row' : 'flex flex-col'
         )}
       >

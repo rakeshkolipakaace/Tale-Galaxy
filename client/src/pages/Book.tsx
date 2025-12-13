@@ -186,24 +186,24 @@ export default function Book() {
                         className="w-full h-full flex bg-paper shadow-2xl overflow-hidden"
                     >
                         {/* Left Page: Image */}
-                        <div className="w-1/2 h-full p-4 flex items-center justify-center bg-stone-100 border-r border-stone-300 relative overflow-hidden">
+                        <div className="w-1/2 h-full p-2 md:p-4 flex items-center justify-center bg-stone-100 border-r border-stone-300 relative overflow-hidden">
                            <img 
                                 src={story.pages[pageIndex].image} 
-                                className="w-full h-full object-contain drop-shadow-xl" 
+                                className="w-full h-full object-contain drop-shadow-xl p-2" 
                                 alt="Story illustration" 
                            />
-                           <div className="absolute bottom-4 left-4 bg-white/80 px-3 py-1 rounded-full text-xs font-bold text-stone-500">
+                           <div className="absolute bottom-2 left-2 md:bottom-4 md:left-4 bg-white/80 px-2 py-1 md:px-3 md:py-1 rounded-full text-[10px] md:text-xs font-bold text-stone-500">
                                Page {pageIndex + 1}
                            </div>
                         </div>
 
                         {/* Right Page: Text */}
-                        <div className="w-1/2 h-full p-8 md:p-12 flex flex-col justify-center bg-[#fffbf0] relative">
+                        <div className="w-1/2 h-full p-4 md:p-12 flex flex-col justify-center bg-[#fffbf0] relative">
                              {/* Paper Texture Effect */}
                              <div className="absolute inset-0 pointer-events-none opacity-[0.03] bg-[url('https://www.transparenttextures.com/patterns/paper-fibers.png')]"></div>
                              
-                             <div className="prose prose-xl font-story leading-relaxed text-ink select-none">
-                                <p className="text-2xl md:text-3xl">
+                             <div className="prose prose-sm md:prose-xl font-story leading-relaxed text-ink select-none overflow-y-auto max-h-full">
+                                <p className="text-lg md:text-3xl">
                                     {highlightText(story.pages[pageIndex].text, transcript)}
                                 </p>
                              </div>

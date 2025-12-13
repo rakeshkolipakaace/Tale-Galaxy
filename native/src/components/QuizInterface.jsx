@@ -5,8 +5,8 @@ import {
   TouchableOpacity,
   StyleSheet,
   ScrollView,
-  Animated,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 
 export default function QuizInterface({ 
   questions, 
@@ -49,7 +49,7 @@ export default function QuizInterface({
     return (
       <View style={styles.resultContainer}>
         <View style={styles.awardCircle}>
-          <Text style={styles.awardIcon}>🏆</Text>
+          <Ionicons name="trophy" size={48} color="#CA8A04" />
         </View>
         
         <Text style={styles.resultTitle}>Quiz Complete!</Text>
@@ -69,7 +69,7 @@ export default function QuizInterface({
               style={styles.readAgainButton}
               onPress={onReadAgain}
             >
-              <Text style={styles.readAgainIcon}>🔄</Text>
+              <Ionicons name="refresh" size={20} color="#FFFFFF" />
               <Text style={styles.readAgainText}>Read Again</Text>
             </TouchableOpacity>
           )}
@@ -78,7 +78,7 @@ export default function QuizInterface({
               style={styles.moreStoriesButton}
               onPress={onBackToStories}
             >
-              <Text style={styles.moreStoriesIcon}>🏠</Text>
+              <Ionicons name="home" size={20} color="#1E293B" />
               <Text style={styles.moreStoriesText}>More Stories</Text>
             </TouchableOpacity>
           )}
@@ -106,7 +106,8 @@ export default function QuizInterface({
             key={idx}
             style={[
               styles.optionButton,
-              selectedAnswer === idx && styles.optionSelected
+              selectedAnswer === idx && styles.optionSelected,
+              idx > 0 && styles.optionMargin
             ]}
             onPress={() => handleAnswer(idx)}
           >
@@ -117,7 +118,7 @@ export default function QuizInterface({
               {opt}
             </Text>
             {selectedAnswer === idx && (
-              <Text style={styles.checkIcon}>✓</Text>
+              <Ionicons name="checkmark" size={18} color="#2563EB" />
             )}
           </TouchableOpacity>
         ))}
@@ -181,8 +182,10 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     borderWidth: 2,
     borderColor: '#E2E8F0',
-    marginBottom: 12,
     backgroundColor: '#FFFFFF',
+  },
+  optionMargin: {
+    marginTop: 12,
   },
   optionSelected: {
     borderColor: '#2563EB',
@@ -196,11 +199,6 @@ const styles = StyleSheet.create({
   },
   optionTextSelected: {
     color: '#1E3A8A',
-  },
-  checkIcon: {
-    fontSize: 18,
-    color: '#2563EB',
-    fontWeight: '700',
   },
   submitButton: {
     backgroundColor: '#2563EB',
@@ -238,9 +236,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginBottom: 24,
   },
-  awardIcon: {
-    fontSize: 48,
-  },
   resultTitle: {
     fontSize: 36,
     fontWeight: '700',
@@ -276,7 +271,6 @@ const styles = StyleSheet.create({
   resultButtons: {
     width: '100%',
     maxWidth: 400,
-    gap: 16,
   },
   readAgainButton: {
     flexDirection: 'row',
@@ -285,15 +279,13 @@ const styles = StyleSheet.create({
     backgroundColor: '#2563EB',
     paddingVertical: 20,
     borderRadius: 16,
-    gap: 12,
-  },
-  readAgainIcon: {
-    fontSize: 20,
+    marginBottom: 16,
   },
   readAgainText: {
     fontSize: 18,
     fontWeight: '700',
     color: '#FFFFFF',
+    marginLeft: 12,
   },
   moreStoriesButton: {
     flexDirection: 'row',
@@ -304,14 +296,11 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     borderWidth: 2,
     borderColor: '#E2E8F0',
-    gap: 12,
-  },
-  moreStoriesIcon: {
-    fontSize: 20,
   },
   moreStoriesText: {
     fontSize: 18,
     fontWeight: '700',
     color: '#1E293B',
+    marginLeft: 12,
   },
 });

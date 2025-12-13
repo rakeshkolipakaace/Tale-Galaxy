@@ -11,10 +11,10 @@ import {
   StatusBar,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { Ionicons, Feather } from '@expo/vector-icons';
 import { genres, ageGroups } from '../lib/storyData';
 
 const { width } = Dimensions.get('window');
-const cardWidth = width > 500 ? (width - 80) / 3 : width - 40;
 
 export default function HomeScreen({ navigation }) {
   const [selectedAge, setSelectedAge] = useState('3-5');
@@ -41,7 +41,7 @@ export default function HomeScreen({ navigation }) {
               
               <View style={styles.logoContainer}>
                 <View style={styles.logoIcon}>
-                  <Text style={styles.sparkle}>✨</Text>
+                  <Ionicons name="sparkles" size={16} color="#2563EB" />
                 </View>
                 <Text style={styles.logoText}>STORYTIME</Text>
               </View>
@@ -53,7 +53,7 @@ export default function HomeScreen({ navigation }) {
                 <Text style={styles.ageSelectorText}>
                   {ageGroups.find(a => a.value === selectedAge)?.label}
                 </Text>
-                <Text style={styles.dropdownArrow}>▼</Text>
+                <Ionicons name="chevron-down" size={14} color="#64748B" />
               </TouchableOpacity>
             </View>
 
@@ -92,7 +92,7 @@ export default function HomeScreen({ navigation }) {
             {genres.map((genre, index) => (
               <TouchableOpacity
                 key={genre.id}
-                style={styles.genreCard}
+                style={[styles.genreCard, index > 0 && styles.genreCardMargin]}
                 onPress={() => handleGenrePress(genre)}
                 activeOpacity={0.9}
               >
@@ -108,7 +108,7 @@ export default function HomeScreen({ navigation }) {
                   <View style={styles.cardHeader}>
                     <Text style={styles.cardTitle}>{genre.title}</Text>
                     <View style={styles.cardIcon}>
-                      <Text style={styles.bookIcon}>📖</Text>
+                      <Feather name="book-open" size={18} color="#3B82F6" />
                     </View>
                   </View>
                   
@@ -120,7 +120,10 @@ export default function HomeScreen({ navigation }) {
                     <View style={styles.storyCount}>
                       <Text style={styles.storyCountText}>10 Stories</Text>
                     </View>
-                    <Text style={styles.exploreText}>Explore →</Text>
+                    <View style={styles.exploreContainer}>
+                      <Text style={styles.exploreText}>Explore</Text>
+                      <Ionicons name="arrow-forward" size={12} color="#94A3B8" />
+                    </View>
                   </View>
                 </View>
               </TouchableOpacity>
@@ -160,15 +163,12 @@ const styles = StyleSheet.create({
   logoContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
   },
   logoIcon: {
     backgroundColor: 'rgba(37, 99, 235, 0.1)',
     padding: 8,
     borderRadius: 12,
-  },
-  sparkle: {
-    fontSize: 16,
+    marginRight: 8,
   },
   logoText: {
     fontSize: 16,
@@ -185,16 +185,12 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     borderWidth: 1,
     borderColor: '#BFDBFE',
-    gap: 8,
   },
   ageSelectorText: {
     fontSize: 14,
     color: '#1E293B',
     fontWeight: '500',
-  },
-  dropdownArrow: {
-    fontSize: 10,
-    color: '#64748B',
+    marginRight: 8,
   },
   agePicker: {
     backgroundColor: '#FFFFFF',
@@ -239,7 +235,6 @@ const styles = StyleSheet.create({
   },
   genreGrid: {
     paddingHorizontal: 20,
-    gap: 20,
   },
   genreCard: {
     backgroundColor: '#FFFFFF',
@@ -252,6 +247,9 @@ const styles = StyleSheet.create({
     elevation: 4,
     borderWidth: 1,
     borderColor: '#DBEAFE',
+  },
+  genreCardMargin: {
+    marginTop: 20,
   },
   cardImageContainer: {
     width: '100%',
@@ -285,9 +283,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  bookIcon: {
-    fontSize: 18,
-  },
   cardDescription: {
     fontSize: 14,
     color: '#64748B',
@@ -310,9 +305,14 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#2563EB',
   },
+  exploreContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
   exploreText: {
     fontSize: 12,
     fontWeight: '500',
     color: '#94A3B8',
+    marginRight: 4,
   },
 });

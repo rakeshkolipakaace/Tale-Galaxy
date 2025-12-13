@@ -11,13 +11,14 @@ import {
   Dimensions,
   Animated,
 } from 'react-native';
+import { Ionicons, Feather } from '@expo/vector-icons';
 import { stories } from '../lib/storyData';
 import QuizInterface from '../components/QuizInterface';
 
 const { width, height } = Dimensions.get('window');
 
 export default function BookScreen({ route, navigation }) {
-  const { genreId, storyId } = route.params;
+  const { genreId, storyId, selectedAge } = route.params;
   
   const genreStories = stories[genreId] || [];
   const story = genreStories.find(s => s.id === storyId) || genreStories[0];
@@ -63,7 +64,7 @@ export default function BookScreen({ route, navigation }) {
   };
 
   const handleBackToStories = () => {
-    navigation.navigate('StorySelection', { genreId, selectedAge: '3-5' });
+    navigation.navigate('StorySelection', { genreId, selectedAge });
   };
 
   const handleBack = () => {
@@ -82,7 +83,7 @@ export default function BookScreen({ route, navigation }) {
         style={styles.backButton}
         onPress={handleBack}
       >
-        <Text style={styles.backIcon}>←</Text>
+        <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
       </TouchableOpacity>
 
       {bookState === 'cover' && (
@@ -104,7 +105,7 @@ export default function BookScreen({ route, navigation }) {
               style={styles.startButton}
               onPress={() => setBookState('reading')}
             >
-              <Text style={styles.startButtonIcon}>📖</Text>
+              <Feather name="book-open" size={24} color="#FFFFFF" />
               <Text style={styles.startButtonText}>Start Reading</Text>
             </TouchableOpacity>
           </View>
@@ -142,7 +143,7 @@ export default function BookScreen({ route, navigation }) {
                   onPress={() => turnPage('prev')}
                   disabled={pageIndex === 0}
                 >
-                  <Text style={styles.navIcon}>←</Text>
+                  <Ionicons name="arrow-back" size={16} color="#78716C" />
                   <Text style={styles.navText}>Previous</Text>
                 </TouchableOpacity>
                 
@@ -151,7 +152,7 @@ export default function BookScreen({ route, navigation }) {
                   onPress={() => turnPage('next')}
                 >
                   <Text style={styles.navText}>Next</Text>
-                  <Text style={styles.navIcon}>→</Text>
+                  <Ionicons name="arrow-forward" size={16} color="#78716C" />
                 </TouchableOpacity>
               </View>
             </View>
@@ -163,7 +164,7 @@ export default function BookScreen({ route, navigation }) {
         <View style={styles.endedContainer}>
           <View style={styles.endedCard}>
             <View style={styles.awardCircle}>
-              <Text style={styles.awardIcon}>🏆</Text>
+              <Ionicons name="trophy" size={48} color="#CA8A04" />
             </View>
             
             <Text style={styles.endedTitle}>The End</Text>
@@ -194,7 +195,7 @@ export default function BookScreen({ route, navigation }) {
             style={styles.closeQuizButton}
             onPress={() => setBookState('ended')}
           >
-            <Text style={styles.closeQuizIcon}>✕</Text>
+            <Ionicons name="close" size={24} color="#1C1917" />
           </TouchableOpacity>
           
           <QuizInterface 
@@ -225,10 +226,6 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 0, 0, 0.3)',
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  backIcon: {
-    fontSize: 24,
-    color: '#FFFFFF',
   },
   coverContainer: {
     flex: 1,
@@ -291,17 +288,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 32,
     paddingVertical: 20,
     borderRadius: 16,
-    gap: 12,
     width: '100%',
     justifyContent: 'center',
-  },
-  startButtonIcon: {
-    fontSize: 24,
   },
   startButtonText: {
     fontSize: 20,
     fontWeight: '700',
     color: '#FFFFFF',
+    marginLeft: 12,
   },
   bookSpread: {
     flex: 1,
@@ -370,14 +364,9 @@ const styles = StyleSheet.create({
   navButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
   },
   navButtonDisabled: {
     opacity: 0.3,
-  },
-  navIcon: {
-    fontSize: 16,
-    color: '#78716C',
   },
   navText: {
     fontSize: 12,
@@ -385,6 +374,7 @@ const styles = StyleSheet.create({
     color: '#78716C',
     textTransform: 'uppercase',
     letterSpacing: 1,
+    marginHorizontal: 4,
   },
   endedContainer: {
     flex: 1,
@@ -409,9 +399,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginBottom: 24,
   },
-  awardIcon: {
-    fontSize: 48,
-  },
   endedTitle: {
     fontSize: 48,
     fontWeight: '700',
@@ -425,13 +412,13 @@ const styles = StyleSheet.create({
   },
   endedButtons: {
     width: '100%',
-    gap: 16,
   },
   quizButton: {
     backgroundColor: '#9333EA',
     paddingVertical: 20,
     borderRadius: 16,
     alignItems: 'center',
+    marginBottom: 16,
   },
   quizButtonText: {
     fontSize: 18,
@@ -466,9 +453,5 @@ const styles = StyleSheet.create({
     backgroundColor: '#F5F5F4',
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  closeQuizIcon: {
-    fontSize: 20,
-    color: '#1C1917',
   },
 });

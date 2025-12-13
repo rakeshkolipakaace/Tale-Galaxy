@@ -11,6 +11,7 @@ import {
   Dimensions,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { Ionicons, Feather } from '@expo/vector-icons';
 import { stories, genres } from '../lib/storyData';
 
 const { width } = Dimensions.get('window');
@@ -27,7 +28,7 @@ export default function StorySelectionScreen({ route, navigation }) {
   };
 
   const handleStoryPress = (story) => {
-    navigation.navigate('Book', { genreId, storyId: story.id });
+    navigation.navigate('Book', { genreId, storyId: story.id, selectedAge });
   };
 
   return (
@@ -42,7 +43,7 @@ export default function StorySelectionScreen({ route, navigation }) {
           style={styles.backButton}
           onPress={handleBackPress}
         >
-          <Text style={styles.backIcon}>←</Text>
+          <Ionicons name="arrow-back" size={24} color="#1E293B" />
         </TouchableOpacity>
         
         <View style={styles.headerContent}>
@@ -74,7 +75,7 @@ export default function StorySelectionScreen({ route, navigation }) {
             {genreStories.map((story, index) => (
               <TouchableOpacity
                 key={story.id}
-                style={styles.storyCard}
+                style={[styles.storyCard, index > 0 && styles.storyCardMargin]}
                 onPress={() => handleStoryPress(story)}
                 activeOpacity={0.9}
               >
@@ -96,11 +97,11 @@ export default function StorySelectionScreen({ route, navigation }) {
                   
                   <View style={styles.storyMeta}>
                     <View style={styles.metaItem}>
-                      <Text style={styles.metaIcon}>🕐</Text>
+                      <Ionicons name="time-outline" size={12} color="#94A3B8" />
                       <Text style={styles.metaText}>5 min</Text>
                     </View>
                     <View style={styles.metaItem}>
-                      <Text style={styles.metaIcon}>⭐</Text>
+                      <Ionicons name="star" size={12} color="#FBBF24" />
                       <Text style={styles.metaText}>4.8</Text>
                     </View>
                   </View>
@@ -140,10 +141,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 16,
-  },
-  backIcon: {
-    fontSize: 24,
-    color: '#1E293B',
   },
   headerContent: {
     flexDirection: 'row',
@@ -196,9 +193,7 @@ const styles = StyleSheet.create({
     padding: 20,
     paddingBottom: 40,
   },
-  storyGrid: {
-    gap: 20,
-  },
+  storyGrid: {},
   storyCard: {
     backgroundColor: '#FFFFFF',
     borderRadius: 20,
@@ -210,6 +205,9 @@ const styles = StyleSheet.create({
     elevation: 4,
     borderWidth: 1,
     borderColor: '#DBEAFE',
+  },
+  storyCardMargin: {
+    marginTop: 20,
   },
   coverContainer: {
     width: '100%',
@@ -237,20 +235,17 @@ const styles = StyleSheet.create({
   },
   storyMeta: {
     flexDirection: 'row',
-    gap: 16,
   },
   metaItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
-  },
-  metaIcon: {
-    fontSize: 12,
+    marginRight: 16,
   },
   metaText: {
     fontSize: 12,
     color: '#94A3B8',
     fontWeight: '500',
+    marginLeft: 4,
   },
   emptyState: {
     paddingVertical: 60,

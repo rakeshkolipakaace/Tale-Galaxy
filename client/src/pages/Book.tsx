@@ -2,40 +2,98 @@ import { useState, useEffect } from 'react';
 import { useRoute, useLocation } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
 import { MobileFrame } from "@/components/MobileFrame";
-import { stories, genres } from "@/lib/storyData";
+import { stories } from "@/lib/storyData";
 import { useSpeechToText, useTextToSpeech } from "@/hooks/useVoice";
+import { Book3D, SequentialHighlighter } from "@/components/Book3D";
 import { QuizInterface } from "@/components/QuizInterface";
 import { Button } from "@/components/ui/button";
-import { Mic, MicOff, Volume2, VolumeX, BookOpen, X, ChevronLeft, Award } from "lucide-react";
+import { Mic, MicOff, Volume2, BookOpen, X, ChevronLeft, Award, PlayCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Card } from "@/components/ui/card";
 
 export default function Book() {
   const [match, params] = useRoute("/book/:genre");
   const [, setLocation] = useLocation();
-  const genreId = params?.genre || 'animals';
-  const story = stories['animals']; // Hardcoded for demo, normally would use genreId to find story
+  const story = stories['animals']; 
 
   // States: 'cover' | 'reading' | 'ended' | 'quiz'
   const [bookState, setBookState] = useState<'cover' | 'reading' | 'ended' | 'quiz'>('cover');
   const [pageIndex, setPageIndex] = useState(0);
   
+  // Controls automatic page turning
+  const [autoTurnTrigger, setAutoTurnTrigger] = useState(0);
+
+  // Turn page logic (hoisted for use in TTS callback)
+  const turnPage = (direction: 'next' | 'prev') => {
+    if (direction === 'next') {
+      if (pageIndex < story.pages.length - 1) {
+        setPageIndex(p => p + 1);
+        resetTranscript(); // Clear karaoke transcript on page turn
+      } else {
+        setBookState('ended');
+      }
+    } else {
+      if (pageIndex > 0) {
+        setPageIndex(p => p - 1);
+        resetTranscript();
+      } else {
+        setBookState('cover');
+      }
+    }
+  };
+
   // Voice Hooks
-  const { isListening, transcript, startListening, stopListening } = useSpeechToText();
-  const { isSpeaking, speak, stop: stopSpeaking } = useTextToSpeech();
+  const { isListening, transcript, startListening, stopListening, resetTranscript } = useSpeechToText();
+  
+  // TTS Hook with Auto-Turn Callback
+  const { isSpeaking, speak, stop: stopSpeaking } = useTextToSpeech({
+      onEnd: () => {
+          // Only auto-turn if we are still in "Explain" mode and not at the end
+          // We use a small timeout to make it feel natural
+          setTimeout(() => {
+              // We need to check a ref or state to see if we should continue
+              // For simplicity, we trigger a state change that the Effect will catch
+              setAutoTurnTrigger(t => t + 1);
+          }, 1000);
+      }
+  });
   
   // Local UI State
   const [isRecordMode, setIsRecordMode] = useState(false);
   const [isExplainMode, setIsExplainMode] = useState(false);
 
-  // Auto-stop recording when story ends
+  // Effect: Handle Auto-Turn Trigger
+  useEffect(() => {
+      if (autoTurnTrigger > 0 && isExplainMode && bookState === 'reading') {
+          if (pageIndex < story.pages.length - 1) {
+              turnPage('next');
+          } else {
+              // End of book, stop explaining
+              setIsExplainMode(false);
+              setBookState('ended');
+          }
+      }
+  }, [autoTurnTrigger]);
+
+  // Effect: Auto-read new page if Explain Mode is ON
+  useEffect(() => {
+      if (isExplainMode && bookState === 'reading') {
+          // Small delay to allow page flip animation to start/finish roughly
+          const timer = setTimeout(() => {
+              speak(story.pages[pageIndex].text);
+          }, 800);
+          return () => clearTimeout(timer);
+      }
+  }, [pageIndex, isExplainMode, bookState]);
+
+
+  // Auto-stop recording/speaking when story ends
   useEffect(() => {
     if (bookState === 'ended' || bookState === 'quiz') {
-      if (isRecordMode) {
-        setIsRecordMode(false);
-        stopListening();
-      }
+      setIsRecordMode(false);
+      stopListening();
       stopSpeaking();
+      setIsExplainMode(false);
     }
   }, [bookState]);
 
@@ -46,127 +104,79 @@ export default function Book() {
       stopListening();
     } else {
       setIsRecordMode(true);
+      setIsExplainMode(false); // Mutually exclusive
+      stopSpeaking();
       startListening();
     }
   };
 
-  // Handle Explain Toggle (Auto-read current page)
+  // Handle Explain Toggle 
   const toggleExplain = () => {
-    if (isSpeaking) {
-      stopSpeaking();
+    if (isExplainMode) {
       setIsExplainMode(false);
+      stopSpeaking();
     } else {
       setIsExplainMode(true);
-      // Read current page text
-      if (bookState === 'reading') {
-        speak(story.pages[pageIndex].text);
-      }
-    }
-  };
-
-  // Page Navigation
-  const turnPage = (direction: 'next' | 'prev') => {
-    stopSpeaking(); // Stop reading if page turns
-    
-    if (direction === 'next') {
-      if (pageIndex < story.pages.length - 1) {
-        setPageIndex(p => p + 1);
-      } else {
-        setBookState('ended');
-      }
-    } else {
-      if (pageIndex > 0) {
-        setPageIndex(p => p - 1);
-      } else {
-        // Close book if going back from page 0? Or just stay?
-        // Let's go back to cover
-        setBookState('cover');
-      }
+      setIsRecordMode(false); // Mutually exclusive
+      stopListening();
+      // Effect will pick this up and start speaking
     }
   };
 
   // Swipe Handler
   const handleDragEnd = (event: any, info: any) => {
     if (info.offset.x < -50) { // Swipe Left -> Next
-      if (bookState === 'cover') {
-         setBookState('reading');
-      } else if (bookState === 'reading') {
-         turnPage('next');
-      } else if (bookState === 'ended') {
-         setBookState('cover'); // Close book
-      }
+        turnPage('next');
     } else if (info.offset.x > 50) { // Swipe Right -> Prev
-      if (bookState === 'reading') {
         turnPage('prev');
-      }
     }
-  };
-  
-  // Highlight logic (very basic matching)
-  const highlightText = (text: string, transcript: string) => {
-    if (!isRecordMode) return text;
-    
-    // Simple logic: if transcript contains words from the text, highlight them?
-    // Actually, user asked: "Wherever he/she is reading the paragraphs the voice should be Recorded... create a highlighting color for that line"
-    // Since we don't have word-level timestamps from simple WebSpeechAPI, we can just highlight the whole block if "recording" is active to show "Listen Mode"
-    // OR we can try to match the last spoken words.
-    
-    // Let's highlight the whole paragraph in a subtle way to indicate "Active Reading Zone" 
-    // and maybe highlight words that appear in the transcript if they match.
-    
-    const words = text.split(' ');
-    return (
-        <span>
-            {words.map((word, i) => {
-                const cleanWord = word.replace(/[^a-zA-Z]/g, '').toLowerCase();
-                const cleanTranscript = transcript.toLowerCase();
-                // Extremely naive matching (if word is in transcript anywhere). 
-                // Better: Check if word is in the *recent* transcript.
-                const isRead = cleanTranscript.includes(cleanWord) && cleanTranscript.length > 5;
-                
-                return (
-                    <span key={i} className={isRead ? "bg-yellow-200 text-black transition-colors duration-500" : ""}>
-                        {word}{' '}
-                    </span>
-                );
-            })}
-        </span>
-    );
   };
 
   return (
     <MobileFrame orientation="landscape">
-      <div className="w-full h-full flex flex-col bg-zinc-900 relative">
+      <div className="w-full h-full flex flex-col bg-zinc-900 relative perspective-2000">
         
         {/* Navigation / Close */}
         <div className="absolute top-4 left-4 z-50">
-           <Button variant="ghost" className="rounded-full w-10 h-10 p-0 bg-white/10 hover:bg-white/20 text-white" onClick={() => setLocation('/')}>
+           <Button variant="ghost" className="rounded-full w-10 h-10 p-0 bg-black/20 hover:bg-black/40 text-white backdrop-blur-md" onClick={() => setLocation('/')}>
              <ChevronLeft className="w-6 h-6" />
            </Button>
         </div>
 
         {/* Main Content Area */}
-        <div className="flex-1 w-full h-full relative overflow-hidden">
+        <div className="flex-1 w-full h-full relative overflow-hidden flex items-center justify-center p-4 md:p-8">
             <AnimatePresence mode="wait">
                 
                 {/* STATE: COVER */}
                 {bookState === 'cover' && (
                     <motion.div 
                         key="cover"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0, x: -100 }}
-                        className="w-full h-full flex items-center justify-center bg-stone-800 overflow-y-auto"
+                        initial={{ opacity: 0, rotateY: -90 }}
+                        animate={{ opacity: 1, rotateY: 0 }}
+                        exit={{ opacity: 0, rotateY: 90 }}
+                        transition={{ duration: 0.6 }}
+                        className="w-full max-w-4xl h-full flex items-center justify-center"
                     >
-                         <div className="text-center space-y-4 max-w-md p-6 m-4 bg-paper rounded-2xl shadow-2xl border-4 border-stone-700">
-                             <img src={story.pages[0].image} className="w-32 h-32 md:w-48 md:h-48 mx-auto rounded-full object-cover border-4 border-stone-300 shadow-inner" />
-                             <h1 className="text-3xl md:text-4xl font-story font-bold">{story.title}</h1>
-                             <p className="text-stone-500 text-sm md:text-base">Swipe or Click Open to begin your adventure.</p>
+                         <div className="text-center space-y-6 max-w-lg w-full p-8 md:p-12 bg-white rounded-[40px] shadow-[0_30px_60px_rgba(0,0,0,0.5)] border-r-[12px] border-stone-200 relative overflow-hidden group">
+                             {/* Book Spine Effect */}
+                             <div className="absolute left-0 top-0 bottom-0 w-6 bg-gradient-to-r from-stone-300 to-stone-100 border-r border-stone-300"></div>
+                             
+                             <motion.img 
+                                layoutId={`image-${story.title}`}
+                                src={story.pages[0].image} 
+                                className="w-48 h-48 md:w-64 md:h-64 mx-auto rounded-full object-cover border-8 border-stone-100 shadow-2xl" 
+                             />
+                             
+                             <div className="relative z-10">
+                                <h1 className="text-4xl md:text-6xl font-story font-bold text-stone-800 mb-2">{story.title}</h1>
+                                <p className="text-stone-500 text-lg">Swipe to open the book</p>
+                             </div>
+
                              <Button 
                                 onClick={() => setBookState('reading')}
-                                className="w-full py-4 md:py-6 text-lg md:text-xl rounded-xl bg-primary hover:bg-primary/90 text-white font-bold"
+                                className="w-full py-8 text-2xl rounded-2xl bg-stone-800 hover:bg-black text-white font-bold shadow-xl transition-all hover:scale-105"
                              >
-                                <BookOpen className="mr-2 w-5 h-5 md:w-6 md:h-6" /> Open Book
+                                <BookOpen className="mr-3 w-8 h-8" /> Start Reading
                              </Button>
                          </div>
                     </motion.div>
@@ -175,55 +185,68 @@ export default function Book() {
                 {/* STATE: READING */}
                 {bookState === 'reading' && (
                     <motion.div 
-                        key={`page-${pageIndex}`}
-                        initial={{ opacity: 0, x: 200, rotateY: 10 }}
-                        animate={{ opacity: 1, x: 0, rotateY: 0 }}
-                        exit={{ opacity: 0, x: -200, rotateY: -10 }}
-                        transition={{ type: "spring", stiffness: 200, damping: 25 }}
-                        drag="x"
-                        dragConstraints={{ left: 0, right: 0 }}
-                        onDragEnd={handleDragEnd}
-                        className="w-full h-full flex bg-paper shadow-2xl overflow-hidden"
+                        key="book-spread"
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        className="w-full max-w-6xl h-full aspect-[3/2] relative perspective-2000"
                     >
-                        {/* Left Page: Image */}
-                        <div className="w-1/2 h-full p-2 md:p-4 flex items-center justify-center bg-stone-100 border-r border-stone-300 relative overflow-hidden">
-                           <img 
-                                src={story.pages[pageIndex].image} 
-                                className="w-full h-full object-contain drop-shadow-xl p-2" 
-                                alt="Story illustration" 
-                           />
-                           <div className="absolute bottom-2 left-2 md:bottom-4 md:left-4 bg-white/80 px-2 py-1 md:px-3 md:py-1 rounded-full text-[10px] md:text-xs font-bold text-stone-500">
-                               Page {pageIndex + 1}
-                           </div>
-                        </div>
-
-                        {/* Right Page: Text */}
-                        <div className="w-1/2 h-full p-4 md:p-12 flex flex-col justify-center bg-[#fffbf0] relative">
-                             {/* Paper Texture Effect */}
-                             <div className="absolute inset-0 pointer-events-none opacity-[0.03] bg-[url('https://www.transparenttextures.com/patterns/paper-fibers.png')]"></div>
+                         {/* The Book Container */}
+                         <div className="w-full h-full flex bg-white rounded-[20px] shadow-[0_20px_50px_rgba(0,0,0,0.5)] overflow-hidden relative border border-stone-200">
                              
-                             <div className="prose prose-sm md:prose-xl font-story leading-relaxed text-ink select-none overflow-y-auto max-h-full">
-                                <p className="text-lg md:text-3xl">
-                                    {highlightText(story.pages[pageIndex].text, transcript)}
-                                </p>
+                             {/* Left Page (Image) */}
+                             <div className="w-1/2 h-full bg-stone-50 border-r border-stone-300 relative overflow-hidden p-6 flex items-center justify-center">
+                                 <motion.div
+                                    key={`img-${pageIndex}`}
+                                    initial={{ opacity: 0, scale: 0.8 }}
+                                    animate={{ opacity: 1, scale: 1 }}
+                                    transition={{ duration: 0.5 }}
+                                    className="w-full h-full relative"
+                                 >
+                                     <img 
+                                        src={story.pages[pageIndex].image} 
+                                        className="w-full h-full object-contain drop-shadow-2xl" 
+                                     />
+                                 </motion.div>
+                                 <div className="absolute bottom-6 left-6 font-story text-stone-400">Page {pageIndex + 1}</div>
                              </div>
 
-                             {/* Voice Icon Animation (When Listening) */}
-                             <AnimatePresence>
-                                 {isRecordMode && (
-                                     <motion.div 
-                                        initial={{ opacity: 0, scale: 0 }}
-                                        animate={{ opacity: 1, scale: 1 }}
-                                        exit={{ opacity: 0, scale: 0 }}
-                                        className="absolute bottom-6 right-6"
-                                     >
-                                         <div className="w-16 h-16 bg-red-500/10 rounded-full flex items-center justify-center animate-pulse">
-                                             <Mic className="w-8 h-8 text-red-500" />
-                                         </div>
-                                     </motion.div>
-                                 )}
-                             </AnimatePresence>
-                        </div>
+                             {/* Right Page (Text) */}
+                             <div className="w-1/2 h-full bg-[#fffbf0] relative overflow-hidden flex flex-col p-8 md:p-16">
+                                  {/* Paper Texture */}
+                                  <div className="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/paper-fibers.png')] pointer-events-none" />
+                                  
+                                  {/* Page Turn Overlay (Simulated 3D Flip) */}
+                                  <AnimatePresence>
+                                      <motion.div
+                                        key={`overlay-${pageIndex}`}
+                                        initial={{ opacity: 0, rotateY: -10, transformOrigin: "left" }}
+                                        animate={{ opacity: 0, rotateY: 0 }}
+                                        exit={{ opacity: [0, 1, 0], rotateY: -90, x: -500 }}
+                                        transition={{ duration: 0.6 }}
+                                        className="absolute inset-0 bg-gradient-to-r from-black/10 to-transparent pointer-events-none z-50"
+                                      />
+                                  </AnimatePresence>
+
+                                  <div className="prose prose-lg md:prose-2xl font-story leading-loose text-stone-800 flex-1 overflow-y-auto z-10 scrollbar-hide">
+                                      <p>
+                                        <SequentialHighlighter 
+                                            text={story.pages[pageIndex].text} 
+                                            transcript={transcript} 
+                                            isRecordMode={isRecordMode} 
+                                        />
+                                      </p>
+                                  </div>
+
+                                  {/* Interaction Hints */}
+                                  <div className="mt-4 flex justify-between items-center text-stone-400 text-sm font-bold uppercase tracking-widest">
+                                      <span onClick={() => turnPage('prev')} className="cursor-pointer hover:text-stone-600">Previous</span>
+                                      <span onClick={() => turnPage('next')} className="cursor-pointer hover:text-stone-600">Next</span>
+                                  </div>
+                             </div>
+
+                             {/* Center Spine Shadow */}
+                             <div className="absolute left-1/2 top-0 bottom-0 w-16 -ml-8 bg-gradient-to-r from-black/5 via-transparent to-black/5 pointer-events-none z-20" />
+                         </div>
                     </motion.div>
                 )}
 
@@ -231,43 +254,38 @@ export default function Book() {
                 {bookState === 'ended' && (
                     <motion.div 
                         key="ended"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        drag="x"
-                        onDragEnd={handleDragEnd}
-                        className="w-full h-full flex bg-stone-900 text-white"
+                        initial={{ opacity: 0, scale: 0.8 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        className="w-full h-full flex items-center justify-center"
                     >
-                        {/* Left: Ended Message */}
-                        <div className="w-1/2 h-full flex flex-col items-center justify-center p-12 bg-stone-800 border-r border-stone-700">
-                            <motion.div 
-                                initial={{ scale: 0.8 }}
+                         <Card className="w-full max-w-2xl bg-white/95 backdrop-blur-xl border-none shadow-2xl p-12 text-center rounded-[40px]">
+                            <motion.div
+                                initial={{ scale: 0 }}
                                 animate={{ scale: 1 }}
-                                className="text-center"
+                                transition={{ type: "spring", delay: 0.2 }}
+                                className="w-32 h-32 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-8"
                             >
-                                <h2 className="text-5xl font-serif font-bold mb-4 text-primary">The End</h2>
-                                <p className="text-stone-400 text-lg mb-8">You've finished the story!</p>
-                                <div className="text-sm text-stone-500">Swipe left to close book</div>
+                                <Award className="w-16 h-16 text-yellow-500" />
                             </motion.div>
-                        </div>
-
-                        {/* Right: Quiz Entry */}
-                        <div className="w-1/2 h-full flex flex-col items-center justify-center p-12 bg-stone-900">
-                            <Card className="w-full max-w-sm p-8 bg-stone-800 border-stone-700 text-center space-y-6">
-                                <div className="w-20 h-20 bg-primary/20 rounded-full flex items-center justify-center mx-auto">
-                                    <Award className="w-10 h-10 text-primary" />
-                                </div>
-                                <div>
-                                    <h3 className="text-2xl font-bold text-white mb-2">Test Your Knowledge</h3>
-                                    <p className="text-stone-400">Take a quick quiz to see how much you remember!</p>
-                                </div>
+                            <h2 className="text-6xl font-story font-bold mb-6 text-stone-800">The End</h2>
+                            <p className="text-2xl text-stone-500 mb-12">You've completed the story!</p>
+                            
+                            <div className="grid grid-cols-2 gap-6">
                                 <Button 
                                     onClick={() => setBookState('quiz')}
-                                    className="w-full py-6 text-lg bg-primary hover:bg-primary/90 text-white"
+                                    className="h-20 text-xl rounded-2xl bg-purple-600 hover:bg-purple-700 text-white font-bold"
                                 >
-                                    Open Quiz
+                                    Start Quiz
                                 </Button>
-                            </Card>
-                        </div>
+                                <Button 
+                                    variant="outline"
+                                    onClick={() => { setBookState('cover'); setPageIndex(0); }}
+                                    className="h-20 text-xl rounded-2xl border-4 border-stone-200 hover:bg-stone-100"
+                                >
+                                    Read Again
+                                </Button>
+                            </div>
+                         </Card>
                     </motion.div>
                 )}
 
@@ -277,11 +295,13 @@ export default function Book() {
                          key="quiz"
                          initial={{ y: "100%" }}
                          animate={{ y: 0 }}
-                         className="w-full h-full bg-paper z-20 overflow-y-auto"
+                         exit={{ y: "100%" }}
+                         transition={{ type: "spring", damping: 25 }}
+                         className="absolute inset-0 bg-white z-50 overflow-y-auto"
                     >
-                         <div className="h-full flex flex-col">
-                             <div className="p-4 flex justify-end">
-                                 <Button variant="ghost" onClick={() => setBookState('ended')}>
+                         <div className="min-h-full flex flex-col max-w-3xl mx-auto p-4 md:p-8">
+                             <div className="flex justify-end mb-4">
+                                 <Button variant="ghost" size="icon" className="rounded-full w-12 h-12 bg-stone-100" onClick={() => setBookState('ended')}>
                                      <X className="w-6 h-6" />
                                  </Button>
                              </div>
@@ -300,42 +320,28 @@ export default function Book() {
             <motion.div 
                 initial={{ y: 100 }}
                 animate={{ y: 0 }}
-                className="h-20 bg-stone-900 border-t border-stone-800 flex items-center justify-between px-12"
+                className="h-24 bg-white/10 backdrop-blur-xl border-t border-white/10 flex items-center justify-center gap-12 px-8 z-40 shadow-2xl"
             >
                 {/* Explain Button */}
-                <div className="flex flex-col items-center gap-1">
-                     <span className="text-[10px] text-stone-500 uppercase tracking-wider font-bold">Explain</span>
-                     <Button 
-                        variant={isExplainMode ? "default" : "outline"}
-                        size="icon"
-                        onClick={toggleExplain}
-                        className={cn(
-                            "rounded-full w-12 h-12 transition-all",
-                            isExplainMode ? "bg-blue-500 hover:bg-blue-600 border-none" : "border-stone-600 text-stone-400 hover:text-white hover:bg-stone-800"
-                        )}
-                     >
-                        {isSpeaking ? <Volume2 className="w-5 h-5 animate-pulse" /> : <Volume2 className="w-5 h-5" />}
-                     </Button>
-                </div>
-
-                <div className="text-stone-600 text-sm font-medium">
-                    Page {pageIndex + 1} of {story.pages.length}
+                <div className="flex flex-col items-center gap-2 group cursor-pointer" onClick={toggleExplain}>
+                     <div className={cn(
+                        "w-14 h-14 rounded-full flex items-center justify-center transition-all duration-300 shadow-lg",
+                        isExplainMode ? "bg-blue-500 text-white scale-110" : "bg-white text-stone-400 hover:bg-blue-50 hover:text-blue-500"
+                     )}>
+                        {isSpeaking ? <Volume2 className="w-6 h-6 animate-pulse" /> : <PlayCircle className="w-6 h-6" />}
+                     </div>
+                     <span className="text-[10px] font-bold uppercase tracking-widest text-white/60 group-hover:text-white">Explain</span>
                 </div>
 
                 {/* Record Button */}
-                <div className="flex flex-col items-center gap-1">
-                     <span className="text-[10px] text-stone-500 uppercase tracking-wider font-bold">Record</span>
-                     <Button 
-                        variant={isRecordMode ? "default" : "outline"}
-                        size="icon"
-                        onClick={toggleRecord}
-                        className={cn(
-                            "rounded-full w-12 h-12 transition-all",
-                            isRecordMode ? "bg-red-500 hover:bg-red-600 border-none shadow-[0_0_15px_rgba(239,68,68,0.5)]" : "border-stone-600 text-stone-400 hover:text-white hover:bg-stone-800"
-                        )}
-                     >
-                        {isRecordMode ? <Mic className="w-5 h-5" /> : <MicOff className="w-5 h-5" />}
-                     </Button>
+                <div className="flex flex-col items-center gap-2 group cursor-pointer" onClick={toggleRecord}>
+                     <div className={cn(
+                        "w-16 h-16 rounded-full flex items-center justify-center transition-all duration-300 shadow-xl border-4",
+                        isRecordMode ? "bg-red-500 border-red-400 text-white scale-110 animate-pulse" : "bg-white border-transparent text-stone-400 hover:bg-red-50 hover:text-red-500"
+                     )}>
+                        {isRecordMode ? <Mic className="w-8 h-8" /> : <MicOff className="w-8 h-8" />}
+                     </div>
+                     <span className="text-[10px] font-bold uppercase tracking-widest text-white/60 group-hover:text-white">Record</span>
                 </div>
             </motion.div>
         )}

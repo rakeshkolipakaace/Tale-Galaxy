@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 import {
   View,
   Text,
@@ -9,43 +9,42 @@ import {
   SafeAreaView,
   StatusBar,
   Dimensions,
-} from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-import { Ionicons, Feather } from '@expo/vector-icons';
-import { stories, genres } from '../lib/storyData';
+} from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
+import { Ionicons, Feather } from "@expo/vector-icons";
+import { stories, genres } from "../lib/storyData";
 
-const { width } = Dimensions.get('window');
+const { width } = Dimensions.get("window");
 
 export default function StorySelectionScreen({ route, navigation }) {
   const { genreId, selectedAge } = route.params;
-  
-  const genre = genres.find(g => g.id === genreId);
+
+  const genre = genres.find((g) => g.id === genreId);
   const allGenreStories = stories[genreId] || [];
-  const genreStories = allGenreStories.filter(story => story.ageGroup === selectedAge);
+  const genreStories = allGenreStories.filter(
+    (story) => story.ageGroup === selectedAge
+  );
 
   const handleBackPress = () => {
     navigation.goBack();
   };
 
   const handleStoryPress = (story) => {
-    navigation.navigate('Book', { genreId, storyId: story.id, selectedAge });
+    navigation.navigate("Book", { genreId, storyId: story.id, selectedAge });
   };
 
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" />
-      
+
       <LinearGradient
-        colors={genre?.colors || ['#DBEAFE', '#FFFFFF']}
+        colors={genre?.colors || ["#DBEAFE", "#FFFFFF"]}
         style={styles.headerGradient}
       >
-        <TouchableOpacity 
-          style={styles.backButton}
-          onPress={handleBackPress}
-        >
+        <TouchableOpacity style={styles.backButton} onPress={handleBackPress}>
           <Ionicons name="arrow-back" size={24} color="#1E293B" />
         </TouchableOpacity>
-        
+
         <View style={styles.headerContent}>
           <View style={styles.headerText}>
             <Text style={styles.genreLabel}>Genre</Text>
@@ -54,10 +53,10 @@ export default function StorySelectionScreen({ route, navigation }) {
               {genreStories.length} stories for ages {selectedAge}
             </Text>
           </View>
-          
+
           <View style={styles.genreImageContainer}>
-            <Image 
-              source={genre?.image} 
+            <Image
+              source={genre?.image}
               style={styles.genreImage}
               resizeMode="cover"
             />
@@ -65,7 +64,7 @@ export default function StorySelectionScreen({ route, navigation }) {
         </View>
       </LinearGradient>
 
-      <ScrollView 
+      <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
@@ -80,13 +79,13 @@ export default function StorySelectionScreen({ route, navigation }) {
                 activeOpacity={0.9}
               >
                 <View style={styles.coverContainer}>
-                  <Image 
-                    source={story.coverImage} 
+                  <Image
+                    source={story.coverImage}
                     style={styles.coverImage}
                     resizeMode="cover"
                   />
                 </View>
-                
+
                 <View style={styles.storyInfo}>
                   <Text style={styles.storyTitle} numberOfLines={2}>
                     {story.title}
@@ -94,7 +93,7 @@ export default function StorySelectionScreen({ route, navigation }) {
                   <Text style={styles.storyDescription} numberOfLines={2}>
                     {story.description}
                   </Text>
-                  
+
                   <View style={styles.storyMeta}>
                     <View style={styles.metaItem}>
                       <Ionicons name="time-outline" size={12} color="#94A3B8" />
@@ -124,7 +123,7 @@ export default function StorySelectionScreen({ route, navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#EFF6FF',
+    backgroundColor: "#EFF6FF",
   },
   headerGradient: {
     paddingTop: 16,
@@ -137,53 +136,53 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.4)',
-    alignItems: 'center',
-    justifyContent: 'center',
+    backgroundColor: "rgba(255, 255, 255, 0.4)",
+    alignItems: "center",
+    justifyContent: "center",
     marginBottom: 16,
   },
   headerContent: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-end',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-end",
   },
   headerText: {
     flex: 1,
   },
   genreLabel: {
     fontSize: 12,
-    fontWeight: '700',
+    fontWeight: 700,
     letterSpacing: 2,
-    textTransform: 'uppercase',
-    color: '#64748B',
+    textTransform: "uppercase",
+    color: "#64748B",
     marginBottom: 4,
   },
   genreTitle: {
     fontSize: 40,
-    fontWeight: '700',
-    color: '#1E293B',
+    fontWeight: 700,
+    color: "#1E293B",
     marginBottom: 8,
   },
   storyCount: {
     fontSize: 16,
-    color: '#475569',
+    color: "#475569",
   },
   genreImageContainer: {
     width: 80,
     height: 80,
     borderRadius: 16,
-    backgroundColor: '#FFFFFF',
-    shadowColor: '#000',
+    backgroundColor: "#FFFFFF",
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.15,
     shadowRadius: 8,
     elevation: 4,
     padding: 4,
-    transform: [{ rotate: '3deg' }],
+    transform: [{ rotate: "3deg" }],
   },
   genreImage: {
-    width: '100%',
-    height: '100%',
+    flex: 1,
+    height: 100,
     borderRadius: 12,
   },
   scrollView: {
@@ -195,65 +194,66 @@ const styles = StyleSheet.create({
   },
   storyGrid: {},
   storyCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: "#FFFFFF",
     borderRadius: 20,
-    overflow: 'hidden',
-    shadowColor: '#000',
+    overflow: "hidden",
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.08,
     shadowRadius: 12,
     elevation: 4,
     borderWidth: 1,
-    borderColor: '#DBEAFE',
+    borderColor: "#DBEAFE",
   },
   storyCardMargin: {
     marginTop: 20,
   },
   coverContainer: {
-    width: '100%',
+    flex: 1,
+
     aspectRatio: 3 / 4,
-    backgroundColor: '#F1F5F9',
+    backgroundColor: "#F1F5F9",
   },
   coverImage: {
-    width: '100%',
-    height: '100%',
+    flex: 1,
+    height: 100,
   },
   storyInfo: {
     padding: 16,
   },
   storyTitle: {
     fontSize: 20,
-    fontWeight: '700',
-    color: '#1E293B',
+    fontWeight: 700,
+    color: "#1E293B",
     marginBottom: 8,
   },
   storyDescription: {
     fontSize: 14,
-    color: '#64748B',
+    color: "#64748B",
     marginBottom: 12,
     lineHeight: 20,
   },
   storyMeta: {
-    flexDirection: 'row',
+    flexDirection: "row",
   },
   metaItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginRight: 16,
   },
   metaText: {
     fontSize: 12,
-    color: '#94A3B8',
-    fontWeight: '500',
+    color: "#94A3B8",
+    fontWeight: "500",
     marginLeft: 4,
   },
   emptyState: {
     paddingVertical: 60,
-    alignItems: 'center',
+    alignItems: "center",
   },
   emptyText: {
     fontSize: 16,
-    color: '#64748B',
-    textAlign: 'center',
+    color: "#64748B",
+    textAlign: "center",
   },
 });

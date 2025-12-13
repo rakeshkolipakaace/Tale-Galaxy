@@ -1,18 +1,18 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   View,
   Text,
   TouchableOpacity,
   StyleSheet,
   ScrollView,
-} from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+} from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 
-export default function QuizInterface({ 
-  questions, 
-  onComplete, 
-  onReadAgain, 
-  onBackToStories 
+export default function QuizInterface({
+  questions,
+  onComplete,
+  onReadAgain,
+  onBackToStories,
 }) {
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [score, setScore] = useState(0);
@@ -25,13 +25,13 @@ export default function QuizInterface({
 
   const submitAnswer = () => {
     if (selectedAnswer === null) return;
-    
+
     if (selectedAnswer === questions[currentQuestion].correctAnswer) {
-      setScore(s => s + 1);
+      setScore((s) => s + 1);
     }
 
     if (currentQuestion < questions.length - 1) {
-      setCurrentQuestion(q => q + 1);
+      setCurrentQuestion((q) => q + 1);
       setSelectedAnswer(null);
     } else {
       setShowResult(true);
@@ -44,23 +44,24 @@ export default function QuizInterface({
     let message = "Great job! Keep reading!";
     if (percentage === 100) message = "Perfect Score! You're a reading master!";
     else if (percentage >= 80) message = "Excellent work! Almost perfect!";
-    else if (percentage >= 60) message = "Good job! You understood the story well!";
+    else if (percentage >= 60)
+      message = "Good job! You understood the story well!";
 
     return (
       <View style={styles.resultContainer}>
         <View style={styles.awardCircle}>
           <Ionicons name="trophy" size={48} color="#CA8A04" />
         </View>
-        
+
         <Text style={styles.resultTitle}>Quiz Complete!</Text>
         <Text style={styles.resultScore}>
           You scored {score} out of {questions.length}
         </Text>
-        
+
         <View style={styles.progressBar}>
           <View style={[styles.progressFill, { width: `${percentage}%` }]} />
         </View>
-        
+
         <Text style={styles.resultMessage}>{message}</Text>
 
         <View style={styles.resultButtons}>
@@ -107,14 +108,16 @@ export default function QuizInterface({
             style={[
               styles.optionButton,
               selectedAnswer === idx && styles.optionSelected,
-              idx > 0 && styles.optionMargin
+              idx > 0 && styles.optionMargin,
             ]}
             onPress={() => handleAnswer(idx)}
           >
-            <Text style={[
-              styles.optionText,
-              selectedAnswer === idx && styles.optionTextSelected
-            ]}>
+            <Text
+              style={[
+                styles.optionText,
+                selectedAnswer === idx && styles.optionTextSelected,
+              ]}
+            >
               {opt}
             </Text>
             {selectedAnswer === idx && (
@@ -124,16 +127,18 @@ export default function QuizInterface({
         ))}
       </ScrollView>
 
-      <TouchableOpacity 
+      <TouchableOpacity
         style={[
           styles.submitButton,
-          selectedAnswer === null && styles.submitButtonDisabled
+          selectedAnswer === null && styles.submitButtonDisabled,
         ]}
         onPress={submitAnswer}
         disabled={selectedAnswer === null}
       >
         <Text style={styles.submitButtonText}>
-          {currentQuestion === questions.length - 1 ? "Finish Quiz" : "Next Question"}
+          {currentQuestion === questions.length - 1
+            ? "Finish Quiz"
+            : "Next Question"}
         </Text>
       </TouchableOpacity>
     </View>
@@ -147,27 +152,27 @@ const styles = StyleSheet.create({
     paddingTop: 60,
   },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: 24,
   },
   questionNumber: {
     fontSize: 12,
-    fontWeight: '700',
-    color: '#94A3B8',
-    textTransform: 'uppercase',
+    fontWeight: 700,
+    color: "#94A3B8",
+    textTransform: "uppercase",
     letterSpacing: 2,
   },
   scoreText: {
     fontSize: 14,
-    fontWeight: '700',
-    color: '#2563EB',
+    fontWeight: 700,
+    color: "#2563EB",
   },
   questionText: {
     fontSize: 28,
-    fontWeight: '700',
-    color: '#1E293B',
+    fontWeight: 700,
+    color: "#1E293B",
     marginBottom: 32,
     lineHeight: 36,
   },
@@ -175,38 +180,38 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   optionButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     padding: 20,
     borderRadius: 16,
     borderWidth: 2,
-    borderColor: '#E2E8F0',
-    backgroundColor: '#FFFFFF',
+    borderColor: "#E2E8F0",
+    backgroundColor: "#FFFFFF",
   },
   optionMargin: {
     marginTop: 12,
   },
   optionSelected: {
-    borderColor: '#2563EB',
-    backgroundColor: '#EFF6FF',
+    borderColor: "#2563EB",
+    backgroundColor: "#EFF6FF",
   },
   optionText: {
     fontSize: 18,
-    fontWeight: '500',
-    color: '#1E293B',
+    fontWeight: 500,
+    color: "#1E293B",
     flex: 1,
   },
   optionTextSelected: {
-    color: '#1E3A8A',
+    color: "#1E3A8A",
   },
   submitButton: {
-    backgroundColor: '#2563EB',
+    backgroundColor: "#2563EB",
     paddingVertical: 20,
     borderRadius: 16,
-    alignItems: 'center',
+    alignItems: "center",
     marginTop: 16,
-    shadowColor: '#2563EB',
+    shadowColor: "#2563EB",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
@@ -217,90 +222,90 @@ const styles = StyleSheet.create({
   },
   submitButtonText: {
     fontSize: 18,
-    fontWeight: '700',
-    color: '#FFFFFF',
+    fontWeight: 700,
+    color: "#FFFFFF",
     letterSpacing: 1,
   },
   resultContainer: {
     flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     padding: 24,
   },
   awardCircle: {
     width: 96,
     height: 96,
     borderRadius: 48,
-    backgroundColor: '#FEF9C3',
-    alignItems: 'center',
-    justifyContent: 'center',
+    backgroundColor: "#FEF9C3",
+    alignItems: "center",
+    justifyContent: "center",
     marginBottom: 24,
   },
   resultTitle: {
     fontSize: 36,
-    fontWeight: '700',
-    color: '#1E293B',
+    fontWeight: 700,
+    color: "#1E293B",
     marginBottom: 12,
   },
   resultScore: {
     fontSize: 22,
-    color: '#475569',
+    color: "#475569",
     marginBottom: 24,
   },
   progressBar: {
-    width: '100%',
+    flex: 1,
     maxWidth: 300,
     height: 16,
-    backgroundColor: '#E2E8F0',
+    backgroundColor: "#E2E8F0",
     borderRadius: 8,
-    overflow: 'hidden',
+    overflow: "hidden",
     marginBottom: 24,
   },
   progressFill: {
-    height: '100%',
-    backgroundColor: '#22C55E',
+    height: "100%",
+    backgroundColor: "#22C55E",
     borderRadius: 8,
   },
   resultMessage: {
     fontSize: 18,
-    color: '#64748B',
-    fontStyle: 'italic',
+    color: "#64748B",
+    fontStyle: "italic",
     marginBottom: 40,
-    textAlign: 'center',
+    textAlign: "center",
   },
   resultButtons: {
-    width: '100%',
+    flex: 1,
     maxWidth: 400,
   },
   readAgainButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#2563EB',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#2563EB",
     paddingVertical: 20,
     borderRadius: 16,
     marginBottom: 16,
   },
   readAgainText: {
     fontSize: 18,
-    fontWeight: '700',
-    color: '#FFFFFF',
+    fontWeight: 700,
+    color: "#FFFFFF",
     marginLeft: 12,
   },
   moreStoriesButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: 'transparent',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "transparent",
     paddingVertical: 20,
     borderRadius: 16,
     borderWidth: 2,
-    borderColor: '#E2E8F0',
+    borderColor: "#E2E8F0",
   },
   moreStoriesText: {
     fontSize: 18,
-    fontWeight: '700',
-    color: '#1E293B',
+    fontWeight: "700",
+    color: "#1E293B",
     marginLeft: 12,
   },
 });

@@ -191,58 +191,89 @@ export default function Book() {
                       key="book-spread"
                       initial={{ opacity: 0, scale: 0.9 }}
                       animate={{ opacity: 1, scale: 1 }}
-                      className="w-full max-w-7xl h-full flex flex-col sm:flex-row relative perspective-2000"
+                      className="w-full max-w-7xl h-full flex flex-col sm:flex-row relative"
+                      style={{ perspective: '2000px' }}
                   >
                        {/* The Book Container */}
                        <div className="flex-1 flex flex-col sm:flex-row bg-white rounded-[20px] shadow-[0_20px_50px_rgba(0,0,0,0.5)] overflow-hidden relative border border-stone-200">
                            
                            {/* Left Page (Image) */}
                            <div className="w-full sm:w-1/2 h-1/2 sm:h-full bg-stone-50 border-b sm:border-b-0 sm:border-r border-stone-300 relative overflow-hidden p-4 sm:p-6 flex items-center justify-center">
-                               <motion.div
-                                  key={`img-${pageIndex}`}
-                                  initial={{ opacity: 0, scale: 0.8 }}
-                                  animate={{ opacity: 1, scale: 1 }}
-                                  transition={{ duration: 0.5 }}
-                                  className="w-full h-full relative"
-                               >
-                                   <img 
-                                      src={story.pages[pageIndex].image} 
-                                      className="w-full h-full object-contain drop-shadow-2xl" 
-                                      alt={`Page ${pageIndex + 1}`}
-                                   />
-                               </motion.div>
+                               <AnimatePresence mode="wait">
+                                 <motion.div
+                                    key={`img-${pageIndex}`}
+                                    initial={{ opacity: 0, x: 100, rotateY: -30 }}
+                                    animate={{ opacity: 1, x: 0, rotateY: 0 }}
+                                    exit={{ opacity: 0, x: -100, rotateY: 30 }}
+                                    transition={{ duration: 0.5, ease: "easeInOut" }}
+                                    className="w-full h-full relative"
+                                    style={{ transformStyle: 'preserve-3d' }}
+                                 >
+                                     <img 
+                                        src={story.pages[pageIndex].image} 
+                                        className="w-full h-full object-contain drop-shadow-2xl" 
+                                        alt={`Page ${pageIndex + 1}`}
+                                     />
+                                 </motion.div>
+                               </AnimatePresence>
                                <div className="absolute bottom-4 left-4 font-story text-stone-400 text-sm">Page {pageIndex + 1}</div>
                            </div>
 
-                           {/* Right Page (Text) */}
-                           <div className="w-full sm:w-1/2 h-1/2 sm:h-full bg-[#fffbf0] relative overflow-hidden flex flex-col p-6 sm:p-8 md:p-16">
+                           {/* Right Page (Text) with Page Turn Animation */}
+                           <div className="w-full sm:w-1/2 h-1/2 sm:h-full bg-[#fffbf0] relative overflow-hidden flex flex-col p-6 sm:p-8 md:p-16" style={{ perspective: '1500px' }}>
                                 {/* Paper Texture */}
                                 <div className="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/paper-fibers.png')] pointer-events-none" />
                                 
-                                {/* Page Turn Overlay (Simulated 3D Flip) */}
-                                <AnimatePresence>
+                                {/* Page Turn Animation Overlay */}
+                                <AnimatePresence mode="wait">
                                     <motion.div
-                                      key={`overlay-${pageIndex}`}
-                                      initial={{ opacity: 0, rotateY: -10, transformOrigin: "left" }}
-                                      animate={{ opacity: 0, rotateY: 0 }}
-                                      exit={{ opacity: [0, 1, 0], rotateY: -90, x: -500 }}
-                                      transition={{ duration: 0.6 }}
-                                      className="absolute inset-0 bg-gradient-to-r from-black/10 to-transparent pointer-events-none z-50"
-                                    />
+                                      key={`text-${pageIndex}`}
+                                      initial={{ 
+                                        opacity: 0, 
+                                        rotateY: -90,
+                                        x: -50,
+                                        transformOrigin: "left center"
+                                      }}
+                                      animate={{ 
+                                        opacity: 1, 
+                                        rotateY: 0,
+                                        x: 0
+                                      }}
+                                      exit={{ 
+                                        opacity: 0, 
+                                        rotateY: 90,
+                                        x: 50,
+                                        transformOrigin: "right center"
+                                      }}
+                                      transition={{ 
+                                        duration: 0.6, 
+                                        ease: [0.4, 0, 0.2, 1]
+                                      }}
+                                      className="prose prose-sm sm:prose-lg md:prose-2xl font-story leading-loose text-stone-800 flex-1 overflow-y-auto z-10 scrollbar-hide relative"
+                                      style={{ 
+                                        transformStyle: 'preserve-3d',
+                                        backfaceVisibility: 'hidden'
+                                      }}
+                                    >
+                                        {/* Page Shadow Effect During Turn */}
+                                        <motion.div
+                                          className="absolute inset-0 bg-gradient-to-r from-black/20 to-transparent pointer-events-none z-20"
+                                          initial={{ opacity: 0.5 }}
+                                          animate={{ opacity: 0 }}
+                                          transition={{ duration: 0.3, delay: 0.3 }}
+                                        />
+                                        <p>
+                                          <SequentialHighlighter 
+                                              text={story.pages[pageIndex].text} 
+                                              transcript={transcript} 
+                                              isRecordMode={isRecordMode} 
+                                          />
+                                        </p>
+                                    </motion.div>
                                 </AnimatePresence>
 
-                                <div className="prose prose-sm sm:prose-lg md:prose-2xl font-story leading-loose text-stone-800 flex-1 overflow-y-auto z-10 scrollbar-hide">
-                                    <p>
-                                      <SequentialHighlighter 
-                                          text={story.pages[pageIndex].text} 
-                                          transcript={transcript} 
-                                          isRecordMode={isRecordMode} 
-                                      />
-                                    </p>
-                                </div>
-
                                 {/* Swipe Arrows */}
-                                <div className="mt-4 flex justify-between items-center text-stone-400 text-xs sm:text-sm font-bold uppercase tracking-widest">
+                                <div className="mt-4 flex justify-between items-center text-stone-400 text-xs sm:text-sm font-bold uppercase tracking-widest z-30">
                                     <button 
                                       onClick={() => turnPage('prev')} 
                                       className="flex items-center gap-1 cursor-pointer hover:text-stone-600 transition-colors disabled:opacity-30"

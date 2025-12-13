@@ -6,21 +6,21 @@
   --font-story: 'Patrick Hand', cursive;
   --font-serif: 'Lora', serif;
 
-  --color-paper: hsl(35 30% 96%);
-  --color-paper-dark: hsl(35 20% 90%);
-  --color-ink: hsl(25 10% 20%);
+  --color-paper: hsl(210 40% 98%);
+  --color-paper-dark: hsl(210 30% 95%);
+  --color-ink: hsl(220 15% 25%);
   
-  --color-primary: hsl(25 90% 60%);
+  --color-primary: hsl(210 100% 60%);
   --color-primary-foreground: hsl(0 0% 100%);
   
-  --color-accent: hsl(180 60% 50%);
+  --color-accent: hsl(200 85% 55%);
   --color-success: hsl(145 60% 45%);
   --color-warning: hsl(45 90% 60%);
 }
 
 @layer base {
   html, body {
-    @apply h-full w-full overflow-hidden bg-paper text-ink touch-none;
+    @apply h-full w-full overflow-hidden bg-gradient-to-br from-blue-50 via-white to-blue-50 text-ink touch-none;
   }
   
   #root {

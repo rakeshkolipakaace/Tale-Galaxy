@@ -48,10 +48,7 @@ export default function HomeScreen({ navigation }) {
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" />
-      <LinearGradient
-        colors={["#E6F0FF", "#FFFFFF"]}
-        style={styles.gradient}
-      >
+      <LinearGradient colors={["#E6F0FF", "#FFFFFF"]} style={styles.gradient}>
         <ScrollView
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
@@ -142,7 +139,7 @@ export default function HomeScreen({ navigation }) {
                     <Image
                       source={genre.image}
                       style={styles.cardImage}
-                      resizeMode="cover"
+                      resizeMode="contain"
                     />
                   </View>
 
@@ -299,14 +296,18 @@ const styles = StyleSheet.create({
     marginTop: 20,
   },
   cardImageContainer: {
-    flex: 1,
+    width: "100%",
     aspectRatio: 4 / 3,
     backgroundColor: "#F1F5F9",
+    justifyContent: "center",
+    alignItems: "center",
   },
+
   cardImage: {
-    flex: 1,
-    height: 100,
+    width: "100%",
+    height: "100%",
   },
+
   cardContent: {
     padding: 20,
   },

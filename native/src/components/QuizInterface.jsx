@@ -16,6 +16,7 @@ export default function QuizInterface({
 }) {
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [score, setScore] = useState(0);
+  const [finalScore, setFinalScore] = useState(null);
   const [showResult, setShowResult] = useState(false);
   const [selectedAnswer, setSelectedAnswer] = useState(null);
 
@@ -26,21 +27,30 @@ export default function QuizInterface({
   const submitAnswer = () => {
     if (selectedAnswer === null) return;
 
-    if (selectedAnswer === questions[currentQuestion].correctAnswer) {
-      setScore((s) => s + 1);
-    }
+    const isCorrect =
+      selectedAnswer === questions[currentQuestion].correctAnswer;
+    const nextScore = score + (isCorrect ? 1 : 0);
+    setScore(nextScore);
 
     if (currentQuestion < questions.length - 1) {
       setCurrentQuestion((q) => q + 1);
       setSelectedAnswer(null);
     } else {
+      setFinalScore(nextScore);
       setShowResult(true);
-      if (onComplete) onComplete();
+      if (onComplete) {
+        onComplete({
+          score: nextScore,
+          total: questions.length,
+          percentage: (nextScore / questions.length) * 100,
+        });
+      }
     }
   };
 
   if (showResult) {
-    const percentage = (score / questions.length) * 100;
+    const resolvedScore = finalScore ?? score;
+    const percentage = (resolvedScore / questions.length) * 100;
     let message = "Great job! Keep reading!";
     if (percentage === 100) message = "Perfect Score! You're a reading master!";
     else if (percentage >= 80) message = "Excellent work! Almost perfect!";
@@ -55,7 +65,7 @@ export default function QuizInterface({
 
         <Text style={styles.resultTitle}>Quiz Complete!</Text>
         <Text style={styles.resultScore}>
-          You scored {score} out of {questions.length}
+          You scored {resolvedScore} out of {questions.length}
         </Text>
 
         <View style={styles.progressBar}>

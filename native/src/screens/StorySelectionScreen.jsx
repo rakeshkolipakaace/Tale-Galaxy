@@ -82,7 +82,7 @@ export default function StorySelectionScreen({ route, navigation }) {
                   <Image
                     source={story.coverImage}
                     style={styles.coverImage}
-                    resizeMode="cover"
+                    resizeMode="contain"
                   />
                 </View>
 
@@ -93,17 +93,6 @@ export default function StorySelectionScreen({ route, navigation }) {
                   <Text style={styles.storyDescription} numberOfLines={2}>
                     {story.description}
                   </Text>
-
-                  <View style={styles.storyMeta}>
-                    <View style={styles.metaItem}>
-                      <Ionicons name="time-outline" size={12} color="#94A3B8" />
-                      <Text style={styles.metaText}>5 min</Text>
-                    </View>
-                    <View style={styles.metaItem}>
-                      <Ionicons name="star" size={12} color="#FBBF24" />
-                      <Text style={styles.metaText}>4.8</Text>
-                    </View>
-                  </View>
                 </View>
               </TouchableOpacity>
             ))}
@@ -178,13 +167,13 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 4,
     padding: 4,
-    transform: [{ rotate: "3deg" }],
   },
   genreImage: {
-    flex: 1,
-    height: 100,
+    width: "100%",
+    height: "100%",
     borderRadius: 12,
   },
+
   scrollView: {
     flex: 1,
   },
@@ -204,33 +193,39 @@ const styles = StyleSheet.create({
     elevation: 4,
     borderWidth: 1,
     borderColor: "#DBEAFE",
+    backgroundColor: "gold",
   },
+
   storyCardMargin: {
-    marginTop: 20,
+    marginTop: 30,
   },
   coverContainer: {
-    flex: 1,
-
-    aspectRatio: 3 / 4,
+    width: "100%",
+    aspectRatio: 4 / 3.5,
     backgroundColor: "#F1F5F9",
+    justifyContent: "center",
+    alignItems: "center",
   },
+
   coverImage: {
-    flex: 1,
-    height: 100,
+    width: "100%",
+    height: "100%",
   },
+
   storyInfo: {
     padding: 16,
   },
   storyTitle: {
     fontSize: 20,
-    fontWeight: 700,
+    fontWeight: 800,
     color: "#1E293B",
     marginBottom: 8,
   },
   storyDescription: {
     fontSize: 14,
+    fontWeight: 700,
     color: "#64748B",
-    marginBottom: 12,
+    marginBottom: 1,
     lineHeight: 20,
   },
   storyMeta: {

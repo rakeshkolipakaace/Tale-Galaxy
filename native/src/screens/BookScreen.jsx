@@ -1,4 +1,10 @@
-import React, { useState, useEffect } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import {
   View,
   Text,
@@ -34,7 +40,11 @@ export default function BookScreen({ route, navigation }) {
   const fadeAnim = useState(new Animated.Value(1))[0];
   const [recording, setRecording] = useState(null);
   const [isRecording, setIsRecording] = useState(false);
-  const [recordedUrisByPage, setRecordedUrisByPage] = useState({});
+  const [readingRecordingUri, setReadingRecordingUri] = useState(null);
+  const [quizResult, setQuizResult] = useState(null);
+  const [ttsActive, setTtsActive] = useState(false);
+
+  const autoExplainRef = useRef(false);
 
   useFocusEffect(
     React.useCallback(() => {
@@ -85,6 +95,28 @@ export default function BookScreen({ route, navigation }) {
     };
   }, [bookState]);
 
+  const animateToPage = useCallback(
+    (nextIndex) => {
+      Animated.sequence([
+        Animated.timing(fadeAnim, {
+          toValue: 0,
+          duration: 150,
+          useNativeDriver: true,
+        }),
+        Animated.timing(fadeAnim, {
+          toValue: 1,
+          duration: 150,
+          useNativeDriver: true,
+        }),
+      ]).start();
+
+      setTimeout(() => {
+        setPageIndex(nextIndex);
+      }, 150);
+    },
+    [fadeAnim]
+  );
+
   const turnPage = (direction) => {
     Animated.sequence([
       Animated.timing(fadeAnim, {
@@ -116,20 +148,64 @@ export default function BookScreen({ route, navigation }) {
     }, 150);
   };
 
-  const handleExplain = () => {
-    const text = story?.pages?.[pageIndex]?.text;
-    if (!text) return;
-
+  const stopTts = useCallback(() => {
+    autoExplainRef.current = false;
+    setTtsActive(false);
     try {
       Speech.stop();
-      Speech.speak(text, {
-        language: "en",
-        rate: 0.9,
-        pitch: 1.0,
-      });
     } catch (e) {
-      Alert.alert("Explain", "Text-to-speech failed to start.");
+      // ignore
     }
+  }, []);
+
+  const speakFromPage = useCallback(
+    (startAtIndex) => {
+      const text = story?.pages?.[startAtIndex]?.text;
+      if (!text) return;
+
+      autoExplainRef.current = true;
+      setTtsActive(true);
+
+      try {
+        Speech.stop();
+        Speech.speak(text, {
+          language: "en",
+          rate: 0.9,
+          pitch: 1.0,
+          onDone: () => {
+            if (!autoExplainRef.current) return;
+            const next = startAtIndex + 1;
+            if (next < story.pages.length) {
+              animateToPage(next);
+              setTimeout(() => {
+                if (!autoExplainRef.current) return;
+                speakFromPage(next);
+              }, 220);
+              return;
+            }
+            stopTts();
+          },
+          onStopped: () => {
+            setTtsActive(false);
+          },
+          onError: () => {
+            stopTts();
+          },
+        });
+      } catch (e) {
+        stopTts();
+        Alert.alert("Explain", "Text-to-speech failed to start.");
+      }
+    },
+    [animateToPage, stopTts, story]
+  );
+
+  const handleExplain = () => {
+    if (ttsActive) {
+      stopTts();
+      return;
+    }
+    speakFromPage(pageIndex);
   };
 
   const stopRecordingIfAny = async () => {
@@ -140,12 +216,7 @@ export default function BookScreen({ route, navigation }) {
       setRecording(null);
       setIsRecording(false);
 
-      if (uri) {
-        setRecordedUrisByPage((prev) => ({
-          ...prev,
-          [pageIndex]: uri,
-        }));
-      }
+      if (uri) setReadingRecordingUri(uri);
     } catch (e) {
       setRecording(null);
       setIsRecording(false);
@@ -179,7 +250,10 @@ export default function BookScreen({ route, navigation }) {
 
   const handleRecord = async () => {
     if (isRecording) {
-      await stopRecordingIfAny();
+      Alert.alert(
+        "Recording",
+        "Recording will stay ON until you start the Quiz."
+      );
       return;
     }
     await startRecording();
@@ -187,13 +261,20 @@ export default function BookScreen({ route, navigation }) {
 
   useEffect(() => {
     return () => {
-      Speech.stop();
+      stopTts();
       stopRecordingIfAny();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const panResponder = React.useMemo(
+  useEffect(() => {
+    // Auto-stop recording when quiz starts.
+    if (bookState === "quiz" && isRecording) {
+      stopRecordingIfAny();
+    }
+  }, [bookState, isRecording]);
+
+  const panResponder = useMemo(
     () =>
       PanResponder.create({
         onMoveShouldSetPanResponder: (_, gesture) => Math.abs(gesture.dx) > 12,
@@ -239,7 +320,6 @@ export default function BookScreen({ route, navigation }) {
 
             <View style={styles.coverContent}>
               <Text style={styles.coverTitle}>{story.title}</Text>
-              <Text style={styles.coverSubtitle}>Swipe to open the book</Text>
             </View>
 
             <TouchableOpacity
@@ -275,24 +355,22 @@ export default function BookScreen({ route, navigation }) {
                 contentContainerStyle={styles.textContent}
                 showsVerticalScrollIndicator={false}
               >
-                <Animated.Text style={[styles.pageText, { opacity: fadeAnim }]}>
+                <Animated.Text
+                  style={[
+                    styles.pageText,
+                    { opacity: fadeAnim },
+                    (ttsActive || isRecording) && styles.pageTextHighlight,
+                  ]}
+                >
                   {story.pages[pageIndex].text}
                 </Animated.Text>
               </ScrollView>
 
               <View style={styles.pageActions}>
                 <View style={styles.swipeHint}>
-                  <Ionicons
-                    name="chevron-back"
-                    size={20}
-                    color="#A8A29E"
-                  />
+                  <Ionicons name="chevron-back" size={20} color="#A8A29E" />
                   <Text style={styles.swipeHintText}>Swipe</Text>
-                  <Ionicons
-                    name="chevron-forward"
-                    size={20}
-                    color="#A8A29E"
-                  />
+                  <Ionicons name="chevron-forward" size={20} color="#A8A29E" />
                 </View>
 
                 <View style={styles.actionButtonsRow}>
@@ -302,16 +380,27 @@ export default function BookScreen({ route, navigation }) {
                     activeOpacity={0.9}
                   >
                     <Ionicons name="volume-high" size={18} color="#FFFFFF" />
-                    <Text style={styles.explainButtonText}>Explain</Text>
+                    <Text style={styles.explainButtonText}>
+                      {ttsActive ? "Stop" : "Explain"}
+                    </Text>
                   </TouchableOpacity>
 
                   <TouchableOpacity
-                    style={styles.recordButton}
+                    style={[
+                      styles.recordButton,
+                      isRecording && styles.recordButtonActive,
+                    ]}
                     onPress={handleRecord}
                     activeOpacity={0.9}
                   >
-                    <Ionicons name="mic" size={18} color="#1C1917" />
-                    <Text style={styles.recordButtonText}>Record</Text>
+                    <Ionicons
+                      name={isRecording ? "radio" : "mic"}
+                      size={18}
+                      color={isRecording ? "#DC2626" : "#1C1917"}
+                    />
+                    <Text style={styles.recordButtonText}>
+                      {isRecording ? "Recording" : "Record"}
+                    </Text>
                   </TouchableOpacity>
                 </View>
               </View>
@@ -362,10 +451,61 @@ export default function BookScreen({ route, navigation }) {
 
           <QuizInterface
             questions={story.quiz}
-            onComplete={() => {}}
+            onComplete={(result) => {
+              setQuizResult(result);
+              setBookState("results");
+            }}
             onReadAgain={handleReadAgain}
             onBackToStories={handleBackToStories}
           />
+        </View>
+      )}
+
+      {bookState === "results" && (
+        <View style={styles.resultsContainer}>
+          <View style={styles.resultsTop}>
+            <Text style={styles.resultsHeader}>Feedback from Reading</Text>
+
+            <View style={styles.metricRow}>
+              <Text style={styles.metricLabel}>Recording</Text>
+              <Text style={styles.metricValue}>
+                {readingRecordingUri ? "Saved" : "Not recorded"}
+              </Text>
+            </View>
+
+            <View style={styles.metricRow}>
+              <Text style={styles.metricLabel}>Pronunciation</Text>
+              <Text style={styles.metricValue}>
+                {readingRecordingUri ? "(Needs STT)" : "--"}
+              </Text>
+            </View>
+
+            <Text style={styles.mistakesTitle}>Mistakes</Text>
+            <Text style={styles.mistakesText}>
+              Word-level mistakes and live highlighting require Speech-to-Text.
+              Tell me if you want dev-build STT (react-native-voice) or server
+              STT (Whisper/Azure/Google).
+            </Text>
+          </View>
+
+          <View style={styles.resultsBottom}>
+            <Text style={styles.resultsHeader}>Quiz Result</Text>
+            <Text style={styles.quizSummaryText}>
+              {quizResult
+                ? `Score: ${quizResult.score}/${quizResult.total} (${Math.round(
+                    quizResult.percentage
+                  )}%)`
+                : "No quiz result"}
+            </Text>
+
+            <TouchableOpacity
+              style={styles.backToStoriesButton}
+              onPress={handleBackToStories}
+              activeOpacity={0.9}
+            >
+              <Text style={styles.backToStoriesText}>Back to Stories</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       )}
     </SafeAreaView>
@@ -394,13 +534,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     padding: 24,
+    backgroundColor: "#808080",
   },
   bookCover: {
-    flex: 1,
     maxWidth: 400,
-    backgroundColor: "#FFFFFF",
     borderRadius: 40,
-    padding: 32,
+    padding: 26,
     alignItems: "center",
     justifyContent: "space-between",
     shadowColor: "#000",
@@ -408,6 +547,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.4,
     shadowRadius: 40,
     elevation: 20,
+    backgroundColor: "#B22222",
   },
   spine: {
     position: "absolute",
@@ -415,30 +555,28 @@ const styles = StyleSheet.create({
     top: 0,
     bottom: 0,
     width: 24,
-    backgroundColor: "#D6D3D1",
     borderTopLeftRadius: 40,
     borderBottomLeftRadius: 40,
     borderRightWidth: 1,
     borderRightColor: "#A8A29E",
+    backgroundColor: "black",
   },
   coverImage: {
     width: 180,
     height: 180,
-    borderRadius: 90,
-    borderWidth: 8,
-    borderColor: "#F5F5F4",
     marginBottom: 24,
+    borderRadius: 12,
   },
   coverContent: {
     alignItems: "center",
     marginBottom: 24,
   },
   coverTitle: {
-    fontSize: 36,
-    fontWeight: 700,
-    color: "#1C1917",
-    textAlign: "center",
+    fontSize: 32,
+    fontWeight: "800",
+    color: "black",
     marginBottom: 8,
+    textAlign: "center",
   },
   coverSubtitle: {
     fontSize: 16,
@@ -447,17 +585,16 @@ const styles = StyleSheet.create({
   startButton: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#1C1917",
+    backgroundColor: "#DAA520",
     paddingHorizontal: 32,
     paddingVertical: 20,
     borderRadius: 16,
-    flex: 1,
     justifyContent: "center",
   },
   startButtonText: {
     fontSize: 20,
-    fontWeight: 700,
-    color: "#FFFFFF",
+    fontWeight: 900,
+    color: "black",
     marginLeft: 12,
   },
   bookSpread: {
@@ -478,7 +615,7 @@ const styles = StyleSheet.create({
   },
   leftPage: {
     flex: 1,
-    backgroundColor: "#FAFAF9",
+    backgroundColor: "#808080",
     borderRightWidth: 1,
     borderRightColor: "#D6D3D1",
     padding: 16,
@@ -498,9 +635,9 @@ const styles = StyleSheet.create({
     borderRadius: 12,
   },
   pageNumber: {
-    fontSize: 12,
-    color: "#A8A29E",
-    marginTop: 8,
+    fontSize: 20,
+    color: "black",
+    marginTop: 10,
   },
   rightPage: {
     flex: 1,
@@ -511,12 +648,18 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   textContent: {
-    paddingBottom: 16,
+    paddingBottom: 96,
   },
   pageText: {
     fontSize: 20,
     lineHeight: 32,
     color: "#1C1917",
+    fontFamily: "cursive",
+  },
+  pageTextHighlight: {
+    backgroundColor: "rgba(59, 130, 246, 0.12)",
+    borderRadius: 10,
+    padding: 8,
   },
   pageActions: {
     paddingTop: 14,
@@ -573,6 +716,10 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: 800,
   },
+  recordButtonActive: {
+    borderColor: "#FECACA",
+    backgroundColor: "#FFF1F2",
+  },
   endedContainer: {
     flex: 1,
     alignItems: "center",
@@ -584,8 +731,9 @@ const styles = StyleSheet.create({
     maxWidth: 500,
     backgroundColor: "#FFFFFF",
     borderRadius: 40,
-    padding: 40,
+    padding: 28,
     alignItems: "center",
+    justifyContent: "space-between",
   },
   awardCircle: {
     width: 100,
@@ -639,6 +787,63 @@ const styles = StyleSheet.create({
   quizContainer: {
     flex: 1,
     backgroundColor: "#FFFFFF",
+  },
+  resultsContainer: {
+    flex: 1,
+    backgroundColor: "#FFFFFF",
+  },
+  resultsTop: {
+    flex: 1,
+    paddingHorizontal: 20,
+    paddingTop: 70,
+    paddingBottom: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: "#E5E7EB",
+  },
+  resultsBottom: {
+    flex: 1,
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    paddingBottom: 24,
+  },
+  resultsHeader: {
+    fontSize: 20,
+    fontWeight: "800",
+    color: "#111827",
+    marginBottom: 14,
+  },
+  metricRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 10,
+  },
+  metricLabel: {
+    fontSize: 14,
+    color: "#6B7280",
+    fontWeight: "700",
+  },
+  metricValue: {
+    fontSize: 14,
+    color: "#111827",
+    fontWeight: "800",
+  },
+  mistakesTitle: {
+    marginTop: 10,
+    fontSize: 14,
+    fontWeight: "800",
+    color: "#111827",
+    marginBottom: 8,
+  },
+  mistakesText: {
+    fontSize: 13,
+    lineHeight: 18,
+    color: "#374151",
+  },
+  quizSummaryText: {
+    fontSize: 16,
+    fontWeight: "800",
+    color: "#111827",
+    marginBottom: 16,
   },
   closeQuizButton: {
     position: "absolute",

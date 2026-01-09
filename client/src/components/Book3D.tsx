@@ -70,26 +70,18 @@ export function SequentialHighlighter({ text, transcript, isRecordMode }: { text
     // We look for the last matched word from the transcript in the text.
     
     let lastMatchIndex = -1;
-    
-    // Optimization: Just check how many words from the start match
-    // Or simpler: Find the last occurrence of the transcript's last few words in the text sequence
-    // Let's iterate through the text words and see if they have been "covered" by the transcript
-    
-    // Naive but effective "Karaoke" pointer:
-    // If transcript has N words, we assume they matched the first N words of text approximately?
-    // No, transcript might have errors.
-    
-    // Robust approach:
-    // Iterate through transcript words. Find them in text words. 
-    // Maintain a "cursor" in text. Only move cursor forward.
-    
     let textCursor = 0;
+    
+    // Improved matching logic:
+    // Instead of looking just at the next 5 words, we'll try to find the best match 
+    // for the entire transcript within the text.
     for (const tWord of cleanTranscriptWords) {
-        // Look ahead in text (limit lookahead to avoid jumping too far)
-        for (let i = textCursor; i < Math.min(textCursor + 5, cleanTextWords.length); i++) {
+        // Look for the word in the text starting from current cursor
+        // We allow a larger lookahead to handle skipped words or recognition errors
+        for (let i = textCursor; i < cleanTextWords.length; i++) {
             if (cleanTextWords[i] === tWord) {
                 textCursor = i + 1;
-                lastMatchIndex = i;
+                lastMatchIndex = Math.max(lastMatchIndex, i);
                 break;
             }
         }

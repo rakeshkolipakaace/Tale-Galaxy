@@ -14,28 +14,11 @@ export function useSpeechToText() {
       recognitionRef.current.lang = 'en-US';
 
       recognitionRef.current.onresult = (event: any) => {
-        let finalTranscript = '';
-        for (let i = event.resultIndex; i < event.results.length; ++i) {
-           finalTranscript += event.results[i][0].transcript;
-        }
-        // We append to the existing transcript state for a continuous stream
-        // But for this "karaoke" style, we might want to just keep the latest session's text 
-        // effectively to match against the current page.
-        // Actually, let's just use the cumulative transcript for the current session.
-        setTranscript(prev => {
-            // A simple way is to just return the latest results if we reset on page turn
-            return finalTranscript; 
-        });
-        
-        // Better approach for stability:
-        // Just extract the latest "final" result and append it? 
-        // For simplicity in this prototype, let's rely on the recognition engine's buffer
-        // which usually gives us the full phrase so far in the current session.
         let fullStr = '';
-        for(let i=0; i<event.results.length; i++) {
-            fullStr += event.results[i][0].transcript;
+        for (let i = 0; i < event.results.length; i++) {
+          fullStr += event.results[i][0].transcript + ' ';
         }
-        setTranscript(fullStr);
+        setTranscript(fullStr.trim());
       };
 
       recognitionRef.current.onerror = (event: any) => {

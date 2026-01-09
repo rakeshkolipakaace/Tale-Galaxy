@@ -56,8 +56,6 @@ export function FlipPage({
 
 // Helper to highlight text sequentially
 export function SequentialHighlighter({ text, transcript, isRecordMode }: { text: string, transcript: string, isRecordMode: boolean }) {
-    if (!isRecordMode) return <span>{text}</span>;
-
     // Normalize text and transcript for comparison
     const normalize = (s: string) => s.toLowerCase().replace(/[^a-z0-9\s]/g, '').split(/\s+/).filter(Boolean);
     
@@ -65,10 +63,6 @@ export function SequentialHighlighter({ text, transcript, isRecordMode }: { text
     const cleanTextWords = normalize(text);
     const cleanTranscriptWords = normalize(transcript);
 
-    // Find the furthest matching index
-    // We assume the user reads somewhat sequentially.
-    // We look for the last matched word from the transcript in the text.
-    
     let lastMatchIndex = -1;
     let textCursor = 0;
     
@@ -88,21 +82,43 @@ export function SequentialHighlighter({ text, transcript, isRecordMode }: { text
     }
 
     return (
-        <span>
-            {textWords.map((word, i) => (
-                <span 
-                    key={i} 
-                    className={`transition-colors duration-200 ${
-                        i <= lastMatchIndex 
-                            ? "bg-yellow-300 text-black px-0.5 rounded-sm" // Read words
-                            : i === lastMatchIndex + 1 
-                                ? "bg-yellow-100 border-b-2 border-red-400" // Next word hint
-                                : ""
-                    }`}
-                >
-                    {word}{' '}
-                </span>
-            ))}
+        <span className="relative">
+            {textWords.map((word, i) => {
+                const isRead = i <= lastMatchIndex;
+                const isCurrent = isRecordMode && i === lastMatchIndex + 1;
+                
+                return (
+                    <motion.span 
+                        key={i} 
+                        initial={false}
+                        animate={{
+                            color: isRead ? "#3b82f6" : "#292524",
+                            scale: isCurrent ? 1.1 : 1,
+                        }}
+                        className={`inline-block relative transition-all duration-300 ${
+                            isRead ? "font-bold" : ""
+                        }`}
+                    >
+                        {word}{' '}
+                        {isRead && (
+                            <motion.span
+                                layoutId={`highlight-${i}`}
+                                className="absolute bottom-0 left-0 right-1 h-[2px] bg-blue-400"
+                                initial={{ scaleX: 0 }}
+                                animate={{ scaleX: 1 }}
+                            />
+                        )}
+                        {isCurrent && (
+                            <motion.span
+                                className="absolute -inset-1 bg-blue-100 rounded-sm -z-10"
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 0.5 }}
+                                transition={{ repeat: Infinity, duration: 1, repeatType: "reverse" }}
+                            />
+                        )}
+                    </motion.span>
+                );
+            })}
         </span>
     );
 }

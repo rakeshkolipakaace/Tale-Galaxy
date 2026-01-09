@@ -21,26 +21,16 @@ export function useSpeechToText() {
         setTranscript(fullStr.trim());
       };
 
-      recognitionRef.current.onerror = (event: any) => {
-        console.error('Speech recognition error', event.error);
-        // Don't auto-stop on no-speech, just keep listening
-        if (event.error === 'not-allowed') {
-             setIsListening(false);
-        }
+      recognitionRef.current.onstart = () => {
+        setIsListening(true);
       };
-      
+
       recognitionRef.current.onend = () => {
-          // Only restart if explicitly still in "listening" state
-          // and we haven't manually stopped it
-          if (isListening && recognitionRef.current) {
-             try {
-                // Check if already started to avoid error
-                // Unfortunately isStarted property isn't standard, so we wrap in try/catch
-                recognitionRef.current.start();
-             } catch (e) {
-                 // Ignore "already started" errors
-             }
-          }
+        if (isListening) {
+          try {
+            recognitionRef.current.start();
+          } catch (e) {}
+        }
       };
     }
   }, [isListening]);

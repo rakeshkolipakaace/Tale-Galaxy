@@ -55,8 +55,8 @@ export function FlipPage({
 }
 
 // Helper to highlight text sequentially
-export function SequentialHighlighter({ text, transcript, isRecordMode }: { text: string, transcript: string, isRecordMode: boolean }) {
-    if (!isRecordMode) return <span>{text}</span>;
+export function SequentialHighlighter({ text, transcript, isRecordMode, isExplainMode }: { text: string, transcript: string, isRecordMode: boolean, isExplainMode: boolean }) {
+    if (!isRecordMode && !isExplainMode) return <span>{text}</span>;
 
     // Normalize text and transcript for comparison
     const normalize = (s: string) => s.toLowerCase().replace(/[^a-z0-9\s]/g, '').split(/\s+/).filter(Boolean);
@@ -66,31 +66,18 @@ export function SequentialHighlighter({ text, transcript, isRecordMode }: { text
     const cleanTranscriptWords = normalize(transcript);
 
     // Find the furthest matching index
-    // We assume the user reads somewhat sequentially.
-    // We look for the last matched word from the transcript in the text.
-    
     let lastMatchIndex = -1;
     
-    // Optimization: Just check how many words from the start match
-    // Or simpler: Find the last occurrence of the transcript's last few words in the text sequence
-    // Let's iterate through the text words and see if they have been "covered" by the transcript
-    
-    // Naive but effective "Karaoke" pointer:
-    // If transcript has N words, we assume they matched the first N words of text approximately?
-    // No, transcript might have errors.
-    
-    // Robust approach:
-    // Iterate through transcript words. Find them in text words. 
-    // Maintain a "cursor" in text. Only move cursor forward.
-    
-    let textCursor = 0;
-    for (const tWord of cleanTranscriptWords) {
-        // Look ahead in text (limit lookahead to avoid jumping too far)
-        for (let i = textCursor; i < Math.min(textCursor + 5, cleanTextWords.length); i++) {
-            if (cleanTextWords[i] === tWord) {
-                textCursor = i + 1;
-                lastMatchIndex = i;
-                break;
+    // Logic for Record Mode (matching transcript)
+    if (isRecordMode) {
+        let textCursor = 0;
+        for (const tWord of cleanTranscriptWords) {
+            for (let i = textCursor; i < Math.min(textCursor + 5, cleanTextWords.length); i++) {
+                if (cleanTextWords[i] === tWord) {
+                    textCursor = i + 1;
+                    lastMatchIndex = i;
+                    break;
+                }
             }
         }
     }
@@ -100,12 +87,14 @@ export function SequentialHighlighter({ text, transcript, isRecordMode }: { text
             {textWords.map((word, i) => (
                 <span 
                     key={i} 
-                    className={`transition-colors duration-200 ${
-                        i <= lastMatchIndex 
-                            ? "bg-yellow-300 text-black px-0.5 rounded-sm" // Read words
-                            : i === lastMatchIndex + 1 
-                                ? "bg-yellow-100 border-b-2 border-red-400" // Next word hint
-                                : ""
+                    className={`transition-all duration-300 ${
+                        (isRecordMode && i <= lastMatchIndex) || isExplainMode
+                            ? "border-b-2 border-blue-400 font-medium" 
+                            : ""
+                    } ${
+                        isRecordMode && i === lastMatchIndex + 1 
+                            ? "bg-yellow-100 border-b-2 border-red-400" 
+                            : ""
                     }`}
                 >
                     {word}{' '}

@@ -387,7 +387,7 @@ export default function Book() {
               className="h-20 sm:h-24 bg-white/10 backdrop-blur-xl border-t border-white/10 flex items-center justify-center gap-8 sm:gap-12 px-4 sm:px-8 z-40 shadow-2xl"
           >
               {/* Explain Button */}
-              <div className="flex flex-col items-center gap-1 sm:gap-2 group cursor-pointer" onClick={toggleExplain}>
+              <div className="flex flex-col items-center gap-1 sm:gap-2 group cursor-pointer" onClick={toggleExplain} data-testid="button-explain">
                    <div className={cn(
                       "w-12 h-12 sm:w-14 sm:h-14 rounded-full flex items-center justify-center transition-all duration-300 shadow-lg",
                       isExplainMode ? "bg-blue-500 text-white scale-110" : "bg-white text-stone-400 hover:bg-blue-50 hover:text-blue-500"
@@ -398,7 +398,7 @@ export default function Book() {
               </div>
 
               {/* Record Button */}
-              <div className="flex flex-col items-center gap-1 sm:gap-2 group cursor-pointer" onClick={toggleRecord}>
+              <div className="flex flex-col items-center gap-1 sm:gap-2 group cursor-pointer" onClick={toggleRecord} data-testid="button-record">
                    <div className={cn(
                       "w-14 h-14 sm:w-16 sm:h-16 rounded-full flex items-center justify-center transition-all duration-300 shadow-xl border-4",
                       isRecordMode ? "bg-red-500 border-red-400 text-white scale-110 animate-pulse" : "bg-white border-transparent text-stone-400 hover:bg-red-50 hover:text-red-500"

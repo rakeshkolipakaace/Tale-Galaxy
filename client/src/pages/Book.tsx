@@ -267,7 +267,6 @@ export default function Book() {
                                               text={story.pages[pageIndex].text} 
                                               transcript={transcript} 
                                               isRecordMode={isRecordMode} 
-                                              isExplainMode={isExplainMode}
                                           />
                                         </p>
                                     </motion.div>

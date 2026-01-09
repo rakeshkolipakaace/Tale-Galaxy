@@ -55,7 +55,9 @@ export function FlipPage({
 }
 
 // Helper to highlight text sequentially
-export function SequentialHighlighter({ text, transcript, isRecordMode, isExplainMode }: { text: string, transcript: string, isRecordMode: boolean, isExplainMode: boolean }) {
+export function SequentialHighlighter({ text, transcript, isRecordMode }: { text: string, transcript: string, isRecordMode: boolean }) {
+    if (!isRecordMode) return <span>{text}</span>;
+
     // Normalize text and transcript for comparison
     const normalize = (s: string) => s.toLowerCase().replace(/[^a-z0-9\s]/g, '').split(/\s+/).filter(Boolean);
     
@@ -63,52 +65,52 @@ export function SequentialHighlighter({ text, transcript, isRecordMode, isExplai
     const cleanTextWords = normalize(text);
     const cleanTranscriptWords = normalize(transcript);
 
-    let currentWordIndex = -1;
-    let textCursor = 0;
+    // Find the furthest matching index
+    // We assume the user reads somewhat sequentially.
+    // We look for the last matched word from the transcript in the text.
     
-    // Improved matching logic:
-    // Maintain a currentWordIndex based on strictly sequential matches
+    let lastMatchIndex = -1;
+    
+    // Optimization: Just check how many words from the start match
+    // Or simpler: Find the last occurrence of the transcript's last few words in the text sequence
+    // Let's iterate through the text words and see if they have been "covered" by the transcript
+    
+    // Naive but effective "Karaoke" pointer:
+    // If transcript has N words, we assume they matched the first N words of text approximately?
+    // No, transcript might have errors.
+    
+    // Robust approach:
+    // Iterate through transcript words. Find them in text words. 
+    // Maintain a "cursor" in text. Only move cursor forward.
+    
+    let textCursor = 0;
     for (const tWord of cleanTranscriptWords) {
-        // Look for the word in the text starting from current cursor
-        // We only move forward (strictly in order)
-        for (let i = textCursor; i < cleanTextWords.length; i++) {
+        // Look ahead in text (limit lookahead to avoid jumping too far)
+        for (let i = textCursor; i < Math.min(textCursor + 5, cleanTextWords.length); i++) {
             if (cleanTextWords[i] === tWord) {
                 textCursor = i + 1;
-                currentWordIndex = i;
+                lastMatchIndex = i;
                 break;
             }
         }
     }
 
     return (
-        <span className="relative">
-            {textWords.map((word, i) => {
-                const isActive = i === currentWordIndex;
-                const shouldHighlight = (isRecordMode && isActive) || (isExplainMode && isActive);
-                
-                return (
-                    <motion.span 
-                        key={i} 
-                        initial={false}
-                        animate={{
-                            backgroundColor: shouldHighlight ? "#fb923c" : "rgba(251, 146, 60, 0)",
-                            scale: isActive ? 1.05 : 1,
-                        }}
-                        transition={{
-                            duration: 0.2,
-                            ease: "easeInOut"
-                        }}
-                        className={`inline-block relative px-1 rounded-[4px] transition-all duration-200 ${
-                            isActive ? "z-20 shadow-sm" : ""
-                        }`}
-                        style={{
-                            color: shouldHighlight ? "#ffffff" : "inherit"
-                        }}
-                    >
-                        {word}{' '}
-                    </motion.span>
-                );
-            })}
+        <span>
+            {textWords.map((word, i) => (
+                <span 
+                    key={i} 
+                    className={`transition-colors duration-200 ${
+                        i <= lastMatchIndex 
+                            ? "bg-yellow-300 text-black px-0.5 rounded-sm" // Read words
+                            : i === lastMatchIndex + 1 
+                                ? "bg-yellow-100 border-b-2 border-red-400" // Next word hint
+                                : ""
+                    }`}
+                >
+                    {word}{' '}
+                </span>
+            ))}
         </span>
     );
 }

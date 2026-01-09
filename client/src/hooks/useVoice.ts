@@ -14,35 +14,50 @@ export function useSpeechToText() {
       recognitionRef.current.lang = 'en-US';
 
       recognitionRef.current.onresult = (event: any) => {
+        let finalTranscript = '';
+        for (let i = event.resultIndex; i < event.results.length; ++i) {
+           finalTranscript += event.results[i][0].transcript;
+        }
+        // We append to the existing transcript state for a continuous stream
+        // But for this "karaoke" style, we might want to just keep the latest session's text 
+        // effectively to match against the current page.
+        // Actually, let's just use the cumulative transcript for the current session.
+        setTranscript(prev => {
+            // A simple way is to just return the latest results if we reset on page turn
+            return finalTranscript; 
+        });
+        
+        // Better approach for stability:
+        // Just extract the latest "final" result and append it? 
+        // For simplicity in this prototype, let's rely on the recognition engine's buffer
+        // which usually gives us the full phrase so far in the current session.
         let fullStr = '';
-        for (let i = 0; i < event.results.length; i++) {
-          fullStr += event.results[i][0].transcript + ' ';
+        for(let i=0; i<event.results.length; i++) {
+            fullStr += event.results[i][0].transcript;
         }
-        setTranscript(fullStr.trim());
-      };
-
-      recognitionRef.current.onstart = () => {
-        setIsListening(true);
-      };
-
-      recognitionRef.current.onend = () => {
-        if (isListening) {
-          try {
-            recognitionRef.current.start();
-          } catch (e) {
-            // Already started or other error, ignore
-          }
-        }
+        setTranscript(fullStr);
       };
 
       recognitionRef.current.onerror = (event: any) => {
-        if (event.error === 'no-speech' || event.error === 'aborted' || event.error === 'network') {
-          return; // Ignore common errors and let onend handle restart
-        }
         console.error('Speech recognition error', event.error);
+        // Don't auto-stop on no-speech, just keep listening
         if (event.error === 'not-allowed') {
-          setIsListening(false);
+             setIsListening(false);
         }
+      };
+      
+      recognitionRef.current.onend = () => {
+          // Only restart if explicitly still in "listening" state
+          // and we haven't manually stopped it
+          if (isListening && recognitionRef.current) {
+             try {
+                // Check if already started to avoid error
+                // Unfortunately isStarted property isn't standard, so we wrap in try/catch
+                recognitionRef.current.start();
+             } catch (e) {
+                 // Ignore "already started" errors
+             }
+          }
       };
     }
   }, [isListening]);
@@ -51,30 +66,32 @@ export function useSpeechToText() {
     setTranscript('');
     setIsListening(true);
     try {
-      if (recognitionRef.current) {
-        recognitionRef.current.stop();
-        setTimeout(() => {
-          try {
-            recognitionRef.current.start();
-          } catch (e) {}
-        }, 200);
-      }
-    } catch (e) {}
+        // Stop first just in case
+        if (recognitionRef.current) {
+            try { recognitionRef.current.stop(); } catch(e) {}
+            setTimeout(() => {
+                 try { recognitionRef.current?.start(); } catch(e) {}
+            }, 100);
+        }
+    } catch(e) { }
   }, []);
 
   const stopListening = useCallback(() => {
     setIsListening(false);
     try {
       recognitionRef.current?.stop();
-    } catch (e) {}
+    } catch(e) { }
   }, []);
 
   const resetTranscript = useCallback(() => {
     setTranscript('');
-    if (recognitionRef.current && isListening) {
-      try {
-        recognitionRef.current.stop();
-      } catch (e) {}
+    // If we are listening, we might want to restart the session to clear the buffer
+    if(recognitionRef.current && isListening) {
+        recognitionRef.current.stop(); 
+        // It will auto-restart due to onend, but let's be safe
+        setTimeout(() => {
+            if(isListening) recognitionRef.current.start();
+        }, 100);
     }
   }, [isListening]);
 

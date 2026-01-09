@@ -52,10 +52,12 @@ export function useSpeechToText() {
           if (isListening && recognitionRef.current) {
              try {
                 // Check if already started to avoid error
-                // Unfortunately isStarted property isn't standard, so we wrap in try/catch
                 recognitionRef.current.start();
-             } catch (e) {
-                 // Ignore "already started" errors
+             } catch (e: any) {
+                 // Ignore "already started" errors or other transient issues
+                 if (e.name !== 'InvalidStateError') {
+                     console.error('Failed to restart recognition:', e);
+                 }
              }
           }
       };
@@ -65,15 +67,17 @@ export function useSpeechToText() {
   const startListening = useCallback(() => {
     setTranscript('');
     setIsListening(true);
-    try {
-        // Stop first just in case
-        if (recognitionRef.current) {
-            try { recognitionRef.current.stop(); } catch(e) {}
-            setTimeout(() => {
-                 try { recognitionRef.current?.start(); } catch(e) {}
-            }, 100);
+    if (recognitionRef.current) {
+        try {
+            recognitionRef.current.start();
+        } catch (e: any) {
+            if (e.name === 'InvalidStateError') {
+                // Already started, this is fine
+            } else {
+                console.error('Error starting recognition:', e);
+            }
         }
-    } catch(e) { }
+    }
   }, []);
 
   const stopListening = useCallback(() => {
@@ -87,11 +91,9 @@ export function useSpeechToText() {
     setTranscript('');
     // If we are listening, we might want to restart the session to clear the buffer
     if(recognitionRef.current && isListening) {
-        recognitionRef.current.stop(); 
-        // It will auto-restart due to onend, but let's be safe
-        setTimeout(() => {
-            if(isListening) recognitionRef.current.start();
-        }, 100);
+        try {
+            recognitionRef.current.stop(); 
+        } catch(e) {}
     }
   }, [isListening]);
 

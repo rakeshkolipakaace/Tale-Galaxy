@@ -84,14 +84,14 @@ export function SequentialHighlighter({ text, transcript, isRecordMode, isExplai
         <span className="relative">
             {textWords.map((word, i) => {
                 const isActive = i === currentWordIndex;
-                const shouldHighlight = (isRecordMode && isActive) || isExplainMode;
+                const shouldHighlight = (isRecordMode && isActive) || (isExplainMode && isActive);
                 
                 return (
                     <motion.span 
                         key={i} 
                         initial={false}
                         animate={{
-                            backgroundColor: shouldHighlight ? "#ffe066" : "rgba(255, 224, 102, 0)",
+                            backgroundColor: shouldHighlight ? "#fb923c" : "rgba(251, 146, 60, 0)",
                             scale: isActive ? 1.05 : 1,
                         }}
                         transition={{
@@ -102,7 +102,7 @@ export function SequentialHighlighter({ text, transcript, isRecordMode, isExplai
                             isActive ? "z-20 shadow-sm" : ""
                         }`}
                         style={{
-                            color: shouldHighlight ? "#000000" : "inherit"
+                            color: shouldHighlight ? "#ffffff" : "inherit"
                         }}
                     >
                         {word}{' '}

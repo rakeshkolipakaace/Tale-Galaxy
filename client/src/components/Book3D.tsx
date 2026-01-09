@@ -92,28 +92,21 @@ export function SequentialHighlighter({ text, transcript, isRecordMode }: { text
                         key={i} 
                         initial={false}
                         animate={{
-                            color: isRead ? "#3b82f6" : "#292524",
-                            scale: isCurrent ? 1.1 : 1,
+                            backgroundColor: isRead ? "#fef08a" : "transparent",
+                            color: isRead ? "#1c1917" : "#292524",
+                            scale: isCurrent ? 1.05 : 1,
                         }}
-                        className={`inline-block relative transition-all duration-300 ${
-                            isRead ? "font-bold" : ""
+                        className={`inline-block relative px-1 rounded-sm transition-all duration-300 ${
+                            isRead ? "font-medium" : ""
                         }`}
                     >
                         {word}{' '}
-                        {isRead && (
-                            <motion.span
-                                layoutId={`highlight-${i}`}
-                                className="absolute bottom-0 left-0 right-1 h-[2px] bg-blue-400"
-                                initial={{ scaleX: 0 }}
-                                animate={{ scaleX: 1 }}
-                            />
-                        )}
                         {isCurrent && (
                             <motion.span
-                                className="absolute -inset-1 bg-blue-100 rounded-sm -z-10"
+                                className="absolute bottom-0 left-0 right-0 h-0.5 bg-red-400"
                                 initial={{ opacity: 0 }}
-                                animate={{ opacity: 0.5 }}
-                                transition={{ repeat: Infinity, duration: 1, repeatType: "reverse" }}
+                                animate={{ opacity: 1 }}
+                                transition={{ repeat: Infinity, duration: 0.8, repeatType: "reverse" }}
                             />
                         )}
                     </motion.span>

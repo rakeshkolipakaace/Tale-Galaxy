@@ -29,7 +29,19 @@ export function useSpeechToText() {
         if (isListening) {
           try {
             recognitionRef.current.start();
-          } catch (e) {}
+          } catch (e) {
+            // Already started or other error, ignore
+          }
+        }
+      };
+
+      recognitionRef.current.onerror = (event: any) => {
+        if (event.error === 'no-speech' || event.error === 'aborted') {
+          return; // Ignore and let onend handle restart
+        }
+        console.error('Speech recognition error', event.error);
+        if (event.error === 'not-allowed') {
+          setIsListening(false);
         }
       };
     }
@@ -39,32 +51,30 @@ export function useSpeechToText() {
     setTranscript('');
     setIsListening(true);
     try {
-        // Stop first just in case
-        if (recognitionRef.current) {
-            try { recognitionRef.current.stop(); } catch(e) {}
-            setTimeout(() => {
-                 try { recognitionRef.current?.start(); } catch(e) {}
-            }, 100);
-        }
-    } catch(e) { }
+      if (recognitionRef.current) {
+        recognitionRef.current.stop();
+        setTimeout(() => {
+          try {
+            recognitionRef.current.start();
+          } catch (e) {}
+        }, 200);
+      }
+    } catch (e) {}
   }, []);
 
   const stopListening = useCallback(() => {
     setIsListening(false);
     try {
       recognitionRef.current?.stop();
-    } catch(e) { }
+    } catch (e) {}
   }, []);
 
   const resetTranscript = useCallback(() => {
     setTranscript('');
-    // If we are listening, we might want to restart the session to clear the buffer
-    if(recognitionRef.current && isListening) {
-        recognitionRef.current.stop(); 
-        // It will auto-restart due to onend, but let's be safe
-        setTimeout(() => {
-            if(isListening) recognitionRef.current.start();
-        }, 100);
+    if (recognitionRef.current && isListening) {
+      try {
+        recognitionRef.current.stop();
+      } catch (e) {}
     }
   }, [isListening]);
 

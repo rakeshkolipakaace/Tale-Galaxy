@@ -63,20 +63,18 @@ export function SequentialHighlighter({ text, transcript, isRecordMode }: { text
     const cleanTextWords = normalize(text);
     const cleanTranscriptWords = normalize(transcript);
 
-    let lastMatchIndex = -1;
+    let currentWordIndex = -1;
     let textCursor = 0;
     
     // Improved matching logic:
-    // We iterate through transcript words and find their best corresponding position in the text.
-    // To handle common recognition errors, we use a fuzzy matching approach.
+    // Maintain a currentWordIndex based on strictly sequential matches
     for (const tWord of cleanTranscriptWords) {
-        // Look for the word in the text starting from a reasonable range around textCursor
-        // This helps handle skipped words or words misidentified at the start
-        const searchRange = cleanTextWords.length; 
-        for (let i = textCursor; i < searchRange; i++) {
+        // Look for the word in the text starting from current cursor
+        // We only move forward (strictly in order)
+        for (let i = textCursor; i < cleanTextWords.length; i++) {
             if (cleanTextWords[i] === tWord) {
                 textCursor = i + 1;
-                lastMatchIndex = Math.max(lastMatchIndex, i);
+                currentWordIndex = i;
                 break;
             }
         }
@@ -85,31 +83,28 @@ export function SequentialHighlighter({ text, transcript, isRecordMode }: { text
     return (
         <span className="relative">
             {textWords.map((word, i) => {
-                const isRead = i <= lastMatchIndex;
-                const isCurrent = isRecordMode && i === lastMatchIndex + 1;
+                const isActive = i === currentWordIndex;
                 
                 return (
                     <motion.span 
                         key={i} 
                         initial={false}
                         animate={{
-                            backgroundColor: isRead ? "#fef08a" : "transparent",
-                            color: isRead ? "#1c1917" : "#292524",
-                            scale: isCurrent ? 1.05 : 1,
+                            backgroundColor: isActive ? "#ffe066" : "transparent",
+                            scale: isActive ? 1.05 : 1,
                         }}
-                        className={`inline-block relative px-1 rounded-sm transition-all duration-300 ${
-                            isRead ? "font-medium" : ""
+                        transition={{
+                            duration: 0.2,
+                            ease: "easeInOut"
+                        }}
+                        className={`inline-block relative px-1 rounded-[4px] transition-all duration-200 ${
+                            isActive ? "z-20 shadow-sm" : ""
                         }`}
+                        style={{
+                            color: isActive ? "#000000" : "inherit"
+                        }}
                     >
                         {word}{' '}
-                        {isCurrent && (
-                            <motion.span
-                                className="absolute bottom-0 left-0 right-0 h-0.5 bg-red-400"
-                                initial={{ opacity: 0 }}
-                                animate={{ opacity: 1 }}
-                                transition={{ repeat: Infinity, duration: 0.8, repeatType: "reverse" }}
-                            />
-                        )}
                     </motion.span>
                 );
             })}

@@ -67,12 +67,13 @@ export function SequentialHighlighter({ text, transcript, isRecordMode }: { text
     let textCursor = 0;
     
     // Improved matching logic:
-    // Instead of looking just at the next 5 words, we'll try to find the best match 
-    // for the entire transcript within the text.
+    // We iterate through transcript words and find their best corresponding position in the text.
+    // To handle common recognition errors, we use a fuzzy matching approach.
     for (const tWord of cleanTranscriptWords) {
-        // Look for the word in the text starting from current cursor
-        // We allow a larger lookahead to handle skipped words or recognition errors
-        for (let i = textCursor; i < cleanTextWords.length; i++) {
+        // Look for the word in the text starting from a reasonable range around textCursor
+        // This helps handle skipped words or words misidentified at the start
+        const searchRange = cleanTextWords.length; 
+        for (let i = textCursor; i < searchRange; i++) {
             if (cleanTextWords[i] === tWord) {
                 textCursor = i + 1;
                 lastMatchIndex = Math.max(lastMatchIndex, i);

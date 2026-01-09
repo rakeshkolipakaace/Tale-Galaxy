@@ -36,8 +36,8 @@ export function useSpeechToText() {
       };
 
       recognitionRef.current.onerror = (event: any) => {
-        if (event.error === 'no-speech' || event.error === 'aborted') {
-          return; // Ignore and let onend handle restart
+        if (event.error === 'no-speech' || event.error === 'aborted' || event.error === 'network') {
+          return; // Ignore common errors and let onend handle restart
         }
         console.error('Speech recognition error', event.error);
         if (event.error === 'not-allowed') {

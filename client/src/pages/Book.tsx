@@ -270,7 +270,9 @@ export default function Book() {
                                               isRecordMode={isRecordMode} 
                                               isExplainMode={isExplainMode}
                                               onMispronounced={(word) => {
+                                                if (!word) return;
                                                 setMispronouncedWords(prev => {
+                                                  if (prev.has(word)) return prev;
                                                   const next = new Set(prev);
                                                   next.add(word);
                                                   return next;

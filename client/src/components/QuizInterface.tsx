@@ -10,9 +10,10 @@ interface QuizInterfaceProps {
   onComplete?: () => void;
   onReadAgain?: () => void;
   onBackToStories?: () => void;
+  mispronouncedWords?: string[];
 }
 
-export function QuizInterface({ questions, onComplete, onReadAgain, onBackToStories }: QuizInterfaceProps) {
+export function QuizInterface({ questions, onComplete, onReadAgain, onBackToStories, mispronouncedWords = [] }: QuizInterfaceProps) {
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [score, setScore] = useState(0);
   const [showResult, setShowResult] = useState(false);
@@ -73,6 +74,22 @@ export function QuizInterface({ questions, onComplete, onReadAgain, onBackToStor
         </div>
         
         <p className="text-slate-500 italic text-lg">{message}</p>
+
+        {mispronouncedWords.length > 0 && (
+          <div className="mt-8 p-6 bg-red-50 rounded-2xl border-2 border-red-100 text-left w-full max-w-md">
+            <h4 className="text-red-800 font-bold mb-3 flex items-center gap-2">
+              <span className="w-2 h-2 bg-red-400 rounded-full animate-pulse" />
+              Words to practice:
+            </h4>
+            <div className="flex flex-wrap gap-2">
+              {mispronouncedWords.map((word, i) => (
+                <span key={i} className="px-3 py-1 bg-white border border-red-200 text-red-600 rounded-lg text-sm font-medium shadow-sm">
+                  {word}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
 
         <div className="flex flex-col sm:flex-row gap-4 w-full max-w-md mt-6">
           {onReadAgain && (

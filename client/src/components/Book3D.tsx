@@ -55,7 +55,7 @@ export function FlipPage({
 }
 
 // Helper to highlight text sequentially
-export function SequentialHighlighter({ text, transcript, isRecordMode, isExplainMode }: { text: string, transcript: string, isRecordMode: boolean, isExplainMode: boolean }) {
+export function SequentialHighlighter({ text, transcript, isRecordMode, isExplainMode, onMispronounced }: { text: string, transcript: string, isRecordMode: boolean, isExplainMode: boolean, onMispronounced?: (word: string) => void }) {
     if (!isRecordMode && !isExplainMode) return <span>{text}</span>;
 
     // Normalize text and transcript for comparison
@@ -72,11 +72,21 @@ export function SequentialHighlighter({ text, transcript, isRecordMode, isExplai
     if (isRecordMode) {
         let textCursor = 0;
         for (const tWord of cleanTranscriptWords) {
+            let matched = false;
             for (let i = textCursor; i < Math.min(textCursor + 5, cleanTextWords.length); i++) {
                 if (cleanTextWords[i] === tWord) {
                     textCursor = i + 1;
                     lastMatchIndex = i;
+                    matched = true;
                     break;
+                }
+            }
+            
+            // If we didn't match and it's a reasonably long word, track it as potentially mispronounced
+            if (!matched && tWord.length > 2 && onMispronounced) {
+                const targetWord = cleanTextWords[textCursor];
+                if (targetWord && targetWord !== tWord) {
+                    onMispronounced(targetWord);
                 }
             }
         }

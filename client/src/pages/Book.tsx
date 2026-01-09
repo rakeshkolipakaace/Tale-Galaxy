@@ -23,6 +23,7 @@ export default function Book() {
   // States: 'cover' | 'reading' | 'ended' | 'quiz'
   const [bookState, setBookState] = useState<'cover' | 'reading' | 'ended' | 'quiz'>('cover');
   const [pageIndex, setPageIndex] = useState(0);
+  const [mispronouncedWords, setMispronouncedWords] = useState<Set<string>>(new Set());
   
   // Controls automatic page turning
   const [autoTurnTrigger, setAutoTurnTrigger] = useState(0);
@@ -268,6 +269,13 @@ export default function Book() {
                                               transcript={transcript} 
                                               isRecordMode={isRecordMode} 
                                               isExplainMode={isExplainMode}
+                                              onMispronounced={(word) => {
+                                                setMispronouncedWords(prev => {
+                                                  const next = new Set(prev);
+                                                  next.add(word);
+                                                  return next;
+                                                });
+                                              }}
                                           />
                                         </p>
                                     </motion.div>
@@ -370,6 +378,7 @@ export default function Book() {
                                  onComplete={() => {}}
                                  onReadAgain={handleReadAgain}
                                  onBackToStories={() => setLocation(`/book/${genreId}`)}
+                                 mispronouncedWords={Array.from(mispronouncedWords)}
                                />
                            </div>
                        </div>

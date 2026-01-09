@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface Book3DProps {
@@ -56,8 +56,6 @@ export function FlipPage({
 
 // Helper to highlight text sequentially
 export function SequentialHighlighter({ text, transcript, isRecordMode, isExplainMode, onMispronounced }: { text: string, transcript: string, isRecordMode: boolean, isExplainMode: boolean, onMispronounced?: (word: string) => void }) {
-    const lastProcessedTranscriptRef = useRef('');
-    
     if (!isRecordMode && !isExplainMode) return <span>{text}</span>;
 
     // Normalize text and transcript for comparison
@@ -69,7 +67,6 @@ export function SequentialHighlighter({ text, transcript, isRecordMode, isExplai
 
     // Find the furthest matching index
     let lastMatchIndex = -1;
-    let mispronounced: string | null = null;
     
     // Logic for Record Mode (matching transcript)
     if (isRecordMode) {
@@ -86,43 +83,14 @@ export function SequentialHighlighter({ text, transcript, isRecordMode, isExplai
             }
             
             // If we didn't match and it's a reasonably long word, track it as potentially mispronounced
-            if (!matched && tWord.length > 2) {
+            if (!matched && tWord.length > 2 && onMispronounced) {
                 const targetWord = cleanTextWords[textCursor];
                 if (targetWord && targetWord !== tWord) {
-                    mispronounced = targetWord;
+                    onMispronounced(targetWord);
                 }
             }
         }
     }
-
-    // Use useEffect to call onMispronounced after render, not during
-    useEffect(() => {
-        if (isRecordMode && onMispronounced && transcript && transcript !== lastProcessedTranscriptRef.current) {
-            lastProcessedTranscriptRef.current = transcript;
-            
-            const cleanTextWords = normalize(text);
-            const cleanTranscriptWords = normalize(transcript);
-            
-            let textCursor = 0;
-            for (const tWord of cleanTranscriptWords) {
-                let matched = false;
-                for (let i = textCursor; i < Math.min(textCursor + 5, cleanTextWords.length); i++) {
-                    if (cleanTextWords[i] === tWord) {
-                        textCursor = i + 1;
-                        matched = true;
-                        break;
-                    }
-                }
-                
-                if (!matched && tWord.length > 2) {
-                    const targetWord = cleanTextWords[textCursor];
-                    if (targetWord && targetWord !== tWord) {
-                        onMispronounced(targetWord);
-                    }
-                }
-            }
-        }
-    }, [transcript, isRecordMode, text, onMispronounced]);
 
     return (
         <span>

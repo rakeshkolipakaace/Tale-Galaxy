@@ -55,7 +55,7 @@ export function FlipPage({
 }
 
 // Helper to highlight text sequentially
-export function SequentialHighlighter({ text, transcript, isRecordMode }: { text: string, transcript: string, isRecordMode: boolean }) {
+export function SequentialHighlighter({ text, transcript, isRecordMode, isExplainMode }: { text: string, transcript: string, isRecordMode: boolean, isExplainMode: boolean }) {
     // Normalize text and transcript for comparison
     const normalize = (s: string) => s.toLowerCase().replace(/[^a-z0-9\s]/g, '').split(/\s+/).filter(Boolean);
     
@@ -84,13 +84,14 @@ export function SequentialHighlighter({ text, transcript, isRecordMode }: { text
         <span className="relative">
             {textWords.map((word, i) => {
                 const isActive = i === currentWordIndex;
+                const shouldHighlight = (isRecordMode && isActive) || isExplainMode;
                 
                 return (
                     <motion.span 
                         key={i} 
                         initial={false}
                         animate={{
-                            backgroundColor: isActive ? "#ffe066" : "transparent",
+                            backgroundColor: shouldHighlight ? "#ffe066" : "rgba(255, 224, 102, 0)",
                             scale: isActive ? 1.05 : 1,
                         }}
                         transition={{
@@ -101,7 +102,7 @@ export function SequentialHighlighter({ text, transcript, isRecordMode }: { text
                             isActive ? "z-20 shadow-sm" : ""
                         }`}
                         style={{
-                            color: isActive ? "#000000" : "inherit"
+                            color: shouldHighlight ? "#000000" : "inherit"
                         }}
                     >
                         {word}{' '}
